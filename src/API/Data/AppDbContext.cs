@@ -21,15 +21,15 @@ namespace API.Data {
             modelBuilder.Entity<PcDevice>()
                 .Property(p => p.IpAddress)
                 .HasConversion(
-                    ip => ip.ToString(),                     // "192.168.1.10"
-                    value => IPAddress.Parse(value)
+                    ip => ip != null ? ip.ToString() : null,               // DB: "192.168.1.10"
+                    value => value != null ? IPAddress.Parse(value) : null // Domain
                 );
 
             modelBuilder.Entity<PcDevice>()
                 .Property(p => p.BroadcastAddress)
                 .HasConversion(
-                    ip => ip.ToString(),
-                    value => IPAddress.Parse(value)
+                    ip => ip != null ? ip.ToString() : null,               // DB: "192.168.1.255"
+                    value => value != null ? IPAddress.Parse(value) : null // Domain
                 );
         }
     }

@@ -6,13 +6,13 @@ namespace API.Services {
     public class WakeOnLanService {
         public async Task Wake(
             PhysicalAddress mac,
-            IPAddress broadcast,
+            IPAddress? broadcast,
             int port = 9,
             CancellationToken cancellationToken = default) {
 
             var macBytes = mac.GetAddressBytes();
             if (macBytes.Length != 6)
-                throw new ArgumentException("Ungültige MAC-Adresse");
+                throw new ArgumentException("Invalid MAC-Address");
 
             byte[] packet = new byte[6 + 16 * macBytes.Length];
             for (int i = 0; i < 6; i++) {
@@ -23,13 +23,92 @@ namespace API.Services {
                 macBytes.CopyTo(packet, i);
             }
 
+            IEnumerable<IPAddress> targets = GetTargets(broadcast);
+
             using var client = new UdpClient();
             client.EnableBroadcast = true;
 
-            for (int i = 0; i < 3; i++) {
-                await client.SendAsync(packet, broadcast.ToString(), port, cancellationToken);
-                await Task.Delay(100);
+            foreach (IPAddress target in targets) {
+                for (int i = 0; i < 3; i++) {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    IPEndPoint endPoint = new IPEndPoint(target, port);
+                    await client.SendAsync(packet, endPoint, cancellationToken);
+                    await Task.Delay(100, cancellationToken);
+                }
             }
+        }
+
+        private static IEnumerable<IPAddress> GetTargets(IPAddress? explicitBroadcast) {
+            var results = new List<IPAddress>();
+
+            if (explicitBroadcast != null) {
+                results.Add(explicitBroadcast);
+            } else {
+                // Falls der Container Host-Interfaces sehen kann (z.B. --network host), liefert diese Methode Host-Broadcasts
+                results.AddRange(GetAllBroadcastAddresses());
+            }
+
+            // Zusätzliche, vom Betreiber konfigurierbare Broadcast-Adressen (z. B. WOL_BROADCASTS="192.168.1.255,10.0.0.255")
+            string? env = Environment.GetEnvironmentVariable("WOL_BROADCASTS");
+            if (!string.IsNullOrWhiteSpace(env)) {
+                foreach (string part in env.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) {
+                    if (IPAddress.TryParse(part, out IPAddress ip) && ip.AddressFamily == AddressFamily.InterNetwork) {
+                        if (!results.Any(r => r.Equals(ip)))
+                            results.Add(ip);
+                    }
+                }
+            }
+
+            // Fallback: globaler Broadcast
+            if (!results.Any()) {
+                results.Add(IPAddress.Broadcast); // 255.255.255.255
+            }
+
+            return results;
+        }
+
+        private static IEnumerable<IPAddress> GetAllBroadcastAddresses() {
+            NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
+            HashSet<string> unique = new HashSet<string>();
+            List<IPAddress> results = new List<IPAddress>();
+
+            foreach (NetworkInterface ni in interfaces) {
+                if (ni.OperationalStatus != OperationalStatus.Up) {
+                    continue;
+                }
+                if (!ni.Supports(NetworkInterfaceComponent.IPv4)) {
+                    continue;
+                }
+                if (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback) {
+                    continue;
+                }
+
+                IPInterfaceProperties properties = ni.GetIPProperties();
+                foreach (UnicastIPAddressInformation unicast in properties.UnicastAddresses) {
+                    if (unicast.Address.AddressFamily != AddressFamily.InterNetwork)
+                        continue;
+                    IPAddress? mask = unicast.IPv4Mask;
+                    if (mask == null)
+                        continue;
+
+                    byte[] ipBytes = unicast.Address.GetAddressBytes();
+                    byte[] maskBytes = mask.GetAddressBytes();
+                    if (ipBytes.Length != maskBytes.Length)
+                        continue;
+
+                    byte[] broadcastBytes = new byte[ipBytes.Length];
+                    for (int i = 0; i < ipBytes.Length; i++) {
+                        broadcastBytes[i] = (byte)(ipBytes[i] | (~maskBytes[i]));
+                    }
+
+                    IPAddress broadcastAddress = new IPAddress(broadcastBytes);
+                    if (unique.Add(broadcastAddress.ToString())) {
+                        results.Add(broadcastAddress);
+                    }
+                }
+            }
+
+            return results;
         }
     }
 }
