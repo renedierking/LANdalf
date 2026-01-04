@@ -6,7 +6,7 @@ namespace LANdalf.UI.Services {
         public LANdalfApiService(LANdalfApiClient apiClient) {
             _apiClient = apiClient;
         }
-               
+
         public async Task<Result<IReadOnlyList<PcDeviceDTO>, Exception>> GetAllPcDevicesAsync(CancellationToken cancellationToken = default) {
             try {
                 var pcDevices = await _apiClient.GetAllPcDevicesAsync(cancellationToken);

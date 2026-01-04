@@ -2,14 +2,11 @@
 
 #nullable disable
 
-namespace API.Migrations
-{
+namespace API.Migrations {
     /// <inheritdoc />
-    public partial class nullablefields : Migration
-    {
+    public partial class nullablefields : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        protected override void Up(MigrationBuilder migrationBuilder) {
             migrationBuilder.AlterColumn<string>(
                 name: "IpAddress",
                 table: "PcDevices",
@@ -28,8 +25,7 @@ namespace API.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+        protected override void Down(MigrationBuilder migrationBuilder) {
             migrationBuilder.AlterColumn<string>(
                 name: "IpAddress",
                 table: "PcDevices",

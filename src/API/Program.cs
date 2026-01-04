@@ -94,7 +94,7 @@ namespace API {
                     operation.Summary = "Updates an existing PcDevice.";
                     operation.Description = "Returns a NoContent-Result.";
                     return Task.CompletedTask;
-                    })
+                })
                 .Produces((int)HttpStatusCode.NoContent)
                 .ProducesProblem((int)HttpStatusCode.NotFound)
                 .ProducesProblem((int)HttpStatusCode.BadRequest);
