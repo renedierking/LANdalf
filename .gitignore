@@ -418,3 +418,4 @@ FodyWeavers.xsd
 *.msp
 
 /src/API/LANdalf
+/src/API/LANdalf_Data
