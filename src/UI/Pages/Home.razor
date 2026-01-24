@@ -1,0 +1,133 @@
+@page "/"
+@using LANdalf.UI.ApiClient
+@using System.Threading.Tasks
+@inject LANdalfApiService LANdalfApiService
+@inject IDialogService DialogService
+
+<PageTitle>LANdalf</PageTitle>
+
+@if (!IsLoading) {
+
+    <MudDataGrid @ref="_grid"
+                 Items="devices"
+                 MultiSelection="false"
+                 Filterable="true"
+                 Dense="true"
+                 ReadOnly="false"
+                 Bordered="true"
+                 EditMode="DataGridEditMode.Form"
+                 StartedEditingItem="@(async (PcDeviceDTO dto) => await StartedEditingItem(dto))"
+                 CanceledEditingItem="@(async (PcDeviceDTO dto) => await CanceledEditingItem())"
+                 CommittedItemChanges="@(async (PcDeviceDTO dto) => await CommittedItemChanges(dto))"
+                 EditTrigger="DataGridEditTrigger.Manual">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Devices</MudText>
+            <MudSpacer />
+            <MudButtonGroup Class="ma-0 pa-0" Color="Color.Success" Variant="Variant.Filled">
+                <MudButton OnClick="NewDeviceAsync">
+                    Add New Device
+                </MudButton>
+            </MudButtonGroup>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="x => x.Name" Title="Name" />
+            <PropertyColumn Property="x => x.MacAddress" Title="MAC Address" />
+            <TemplateColumn>
+                <CellTemplate>
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" OnClick="@(() => DeleteDeviceAsync(context.Item))" />
+                </CellTemplate>
+                @* <EditTemplate>
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" OnClick="@(() => DeleteDeviceAsync(context.Item))" />
+                </EditTemplate> *@
+            </TemplateColumn>
+            <TemplateColumn>
+                <CellTemplate>
+                    <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary">
+                        Start
+                    </MudButton>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="PcDeviceDTO" />
+        </PagerContent>
+    </MudDataGrid>
+} else {
+    <MudStack Class="mt-5" Justify="Justify.Center" AlignItems="AlignItems.Center">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudStack>
+}
+
+@code {
+    private IEnumerable<PcDeviceDTO> devices = new List<PcDeviceDTO>();
+    private MudDataGrid<PcDeviceDTO> _grid = default!;
+    private bool IsLoading { get; set; }
+
+
+    protected override async Task OnInitializedAsync() {
+        await LoadData();
+    }
+
+    private async Task LoadData() {
+        try {
+            IsLoading = true;
+            var result = await LANdalfApiService.GetAllPcDevicesAsync(CancellationToken);
+            if (result.IsError) {
+                // Error anzeigen
+            } else {
+                devices = result.Value!;
+            }
+        } finally {
+            IsLoading = false;
+        }
+    }
+
+    private async Task NewDeviceAsync() {
+        var device = new PcDeviceDTO();
+        await _grid.SetEditingItemAsync(device);
+    }
+
+    private async Task DeleteDeviceAsync(PcDeviceDTO item) {
+        var result = await LANdalfApiService.DeletePcDeviceAsync(item.Id, CancellationToken);
+        if (result.IsSuccess) {
+            await LoadData();
+        }
+    }
+
+    private async Task StartedEditingItem(PcDeviceDTO item) {
+
+    }
+
+    private async Task CanceledEditingItem() {
+        // update code for backing data here if needed
+        await LoadData();
+    }
+
+    private async Task CommittedItemChanges(PcDeviceDTO item) {
+        if (item.Id == 0) {
+            var createDTO = new PcCreateDto {
+                Name = item.Name,
+                MacAddress = item.MacAddress,
+                IpAddress = item.IpAddress,
+                BroadcastAddress = item.BroadcastAddress
+            };
+            var resultAdd = await LANdalfApiService.AddPcDeviceAsync(createDTO, CancellationToken);
+            if (resultAdd.IsSuccess) {
+                await LoadData();
+            } else {
+                // Fehler anzeigen
+                await DialogService.ShowMessageBox("Error", resultAdd.Error!.Message);
+            }
+            return;
+        }
+
+        var result = await LANdalfApiService.UpdatePcDevice(item, CancellationToken);
+        if (result.IsSuccess) {
+            await LoadData();
+        } else {
+            await DialogService.ShowMessageBox("Error", result.Error!.Message);
+        }
+    }
+}
