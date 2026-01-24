@@ -117,6 +117,8 @@ namespace API {
                 });
             });
 
+            //app.UseStaticFiles(); // Vor app.UseRouting()
+
             // Minimal API endpoints v1
             var versionedApi = app.NewVersionedApi("LANdalf-api");
             var v1 = versionedApi.MapGroup("/api/v{version:apiVersion}");
