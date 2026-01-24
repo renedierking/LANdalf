@@ -4,10 +4,13 @@ using System.Net.Sockets;
 
 namespace API.Services {
     public class WakeOnLanService {
+
+        private const int WAKE_PORT_7 = 7;
+        private const int WAKE_PORT_9 = 9;
+
         public async Task Wake(
             PhysicalAddress mac,
             IPAddress? broadcast,
-            int port = 9,
             CancellationToken cancellationToken = default) {
 
             var macBytes = mac.GetAddressBytes();
@@ -29,12 +32,17 @@ namespace API.Services {
             client.EnableBroadcast = true;
 
             foreach (IPAddress target in targets) {
-                for (int i = 0; i < 3; i++) {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    IPEndPoint endPoint = new IPEndPoint(target, port);
-                    await client.SendAsync(packet, endPoint, cancellationToken);
-                    await Task.Delay(100, cancellationToken);
-                }
+                await SendAsync(packet, WAKE_PORT_7, client, target, cancellationToken);
+                await SendAsync(packet, WAKE_PORT_9, client, target, cancellationToken);
+            }
+        }
+
+        private static async Task SendAsync(byte[] packet, int port, UdpClient client, IPAddress target, CancellationToken cancellationToken) {
+            for (int i = 0; i < 3; i++) {
+                cancellationToken.ThrowIfCancellationRequested();
+                IPEndPoint endPoint = new IPEndPoint(target, port);
+                await client.SendAsync(packet, endPoint, cancellationToken);
+                await Task.Delay(30, cancellationToken);
             }
         }
 
@@ -52,9 +60,10 @@ namespace API.Services {
             string? env = Environment.GetEnvironmentVariable("WOL_BROADCASTS");
             if (!string.IsNullOrWhiteSpace(env)) {
                 foreach (string part in env.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) {
-                    if (IPAddress.TryParse(part, out IPAddress ip) && ip.AddressFamily == AddressFamily.InterNetwork) {
-                        if (!results.Any(r => r.Equals(ip)))
+                    if (IPAddress.TryParse(part, out IPAddress? ip) && ip?.AddressFamily == AddressFamily.InterNetwork) {
+                        if (!results.Any(r => r.Equals(ip))) {
                             results.Add(ip);
+                        }
                     }
                 }
             }

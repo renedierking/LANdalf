@@ -1,20 +1,24 @@
 ﻿using API.Data;
 using API.DTOs;
 using API.Handler;
-using API.Models;
 using API.Services;
 using Asp.Versioning;
 using LANdalf.API.DTOs;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using System.Diagnostics;
 using System.Net;
+using System.Text.Json;
 
 namespace API {
     public class Program {
         public static void Main(string[] args) {
             var builder = WebApplication.CreateBuilder(args);
 
-            var dbPath = Path.Combine(builder.Environment.ContentRootPath, "LANdalf", "landalf.db");
+            var dbPath = Path.Combine(builder.Environment.ContentRootPath, "LANdalf_Data", "landalf.db");
             var dbDir = Path.GetDirectoryName(dbPath);
             if (!string.IsNullOrEmpty(dbDir)) {
                 Directory.CreateDirectory(dbDir);
@@ -40,6 +44,18 @@ namespace API {
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
 
+            string corsPolicyName = "AllowFrontend";
+            builder.Services.AddCors(options => {
+                var frontendUrl = builder.Configuration["Cors:FrontendUrl"] ?? "https://localhost:7052";
+                options.AddPolicy(corsPolicyName, policy => {
+                    policy.WithOrigins(frontendUrl)
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                });
+            });
+
+
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment()) {
@@ -52,9 +68,54 @@ namespace API {
                 db.Database.Migrate();
             }
 
-            //app.UseHttpsRedirection();
-            //app.UseAuthorization();
-            //app.MapControllers();
+            app.UseCors(corsPolicyName);
+
+            // Global Exception-Handling for all Minimal-API-Endpoints
+            app.UseExceptionHandler(exceptionApp => {
+                exceptionApp.Run(async context => {
+                    ILogger<Program> logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+                    IExceptionHandlerFeature? feature = context.Features.Get<IExceptionHandlerFeature>();
+                    Exception? ex = feature?.Error;
+
+                    string traceId = Activity.Current?.Id ?? context.TraceIdentifier;
+
+                    int statusCode = StatusCodes.Status500InternalServerError;
+                    string title = "An unhandled Error occured.";
+
+                    if (ex is ArgumentException) {
+                        statusCode = StatusCodes.Status400BadRequest;
+                        title = "Invalid Request.";
+                    } else if (ex is KeyNotFoundException) {
+                        statusCode = StatusCodes.Status404NotFound;
+                        title = "Resource not found.";
+                    } else if (ex is UnauthorizedAccessException) {
+                        statusCode = StatusCodes.Status401Unauthorized;
+                        title = "Unauthorized.";
+                    } else if (ex is OperationCanceledException) {
+                        statusCode = StatusCodes.Status400BadRequest;
+                        title = "Request canceled.";
+                    }
+
+                    ProblemDetailsFactory factory = context.RequestServices.GetRequiredService<ProblemDetailsFactory>();
+                    ProblemDetails problem = factory.CreateProblemDetails(
+                        httpContext: context,
+                        statusCode: statusCode,
+                        title: title,
+                        type: null,
+                        detail: ex?.Message,
+                        instance: context.Request.Path);
+
+                    problem.Extensions["traceId"] = traceId;
+
+                    logger.LogError(ex, "Unhandled exception occurred. TraceId: {TraceId}", traceId);
+
+                    context.Response.StatusCode = statusCode;
+                    context.Response.ContentType = "application/problem+json";
+
+                    var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+                    await JsonSerializer.SerializeAsync(context.Response.Body, problem, problem.GetType(), options);
+                });
+            });
 
             // Minimal API endpoints v1
             var versionedApi = app.NewVersionedApi("LANdalf-api");
