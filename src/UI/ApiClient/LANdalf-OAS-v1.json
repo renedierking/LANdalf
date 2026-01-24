@@ -276,10 +276,16 @@
             "type": "string"
           },
           "ipAddress": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "broadcastAddress": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -309,10 +315,16 @@
             "type": "string"
           },
           "ipAddress": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "broadcastAddress": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "isOnline": {
             "type": "boolean"

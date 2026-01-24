@@ -1,7 +1,10 @@
 @inherits LayoutComponentBase
+@implements IAsyncDisposable
+@inject ThemeService ThemeService
+@inject IJSRuntime JsRuntime
 
 @* Required *@
-<MudThemeProvider />
+<MudThemeProvider @bind-IsDarkMode="isDarkMode" Theme="ThemeService.GetCurrentTheme()" />
 <MudPopoverProvider />
 
 @* Needed for dialogs *@
@@ -12,7 +15,14 @@
 
 <MudLayout>
     <MudAppBar>
-        <MudText>LANdalf</MudText>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="w-100">
+            <MudText Typo="Typo.h6">LANdalf</MudText>
+            <MudSpacer />
+            <MudIconButton Icon="@(isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                           Color="Color.Inherit"
+                           OnClick="@ToggleTheme"
+                           Title="@(isDarkMode ? "Light Mode" : "Dark Mode")" />
+        </MudStack>
     </MudAppBar>
 
     <MudMainContent>
@@ -21,3 +31,25 @@
         </MudContainer>
     </MudMainContent>
 </MudLayout>
+
+@code {
+    private bool isDarkMode;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ThemeService.OnThemeChanged += StateHasChanged;
+        await ThemeService.LoadThemeFromStorage(JsRuntime);
+        isDarkMode = ThemeService.IsDarkMode;
+    }
+
+    private async Task ToggleTheme()
+    {
+        await ThemeService.ToggleTheme(JsRuntime);
+        isDarkMode = ThemeService.IsDarkMode;
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        ThemeService.OnThemeChanged -= StateHasChanged;
+    }
+}
