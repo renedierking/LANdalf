@@ -18,7 +18,7 @@ namespace LANdalf.UI {
 
             builder.Services.AddHttpClient("LANdalf.Api", client => {
                 //client.BaseAddress = new Uri(apiBase);
-                client.BaseAddress = new Uri("/");
+                client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
             });
 
             // Standard HttpClient (so: @inject HttpClient Http) nutzt die API
