@@ -1,4 +1,6 @@
 <Solution>
   <Project Path="src/API/API.csproj" />
   <Project Path="src/UI/UI.csproj" Id="5444bc3c-baec-4f84-ab0c-90abe3835533" />
+  <Project Path="test/API/API.Tests.csproj" />
+  <Project Path="test/UI/UI.Tests.csproj" />
 </Solution>
