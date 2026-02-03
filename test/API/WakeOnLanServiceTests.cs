@@ -35,7 +35,7 @@ public class WakeOnLanServiceTests {
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            async () => await _service.Wake(mac, broadcast)
+            async () => await _service.Wake(mac, broadcast, TestContext.Current.CancellationToken)
         );
     }
 
@@ -47,7 +47,7 @@ public class WakeOnLanServiceTests {
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            async () => await _service.Wake(mac, broadcast)
+            async () => await _service.Wake(mac, broadcast, TestContext.Current.CancellationToken)
         );
     }
 

@@ -74,7 +74,7 @@ public class LANdalfApiServiceTests {
             .ThrowsAsync(exception);
 
         // Act
-        var result = await _service.GetAllPcDevicesAsync();
+        var result = await _service.GetAllPcDevicesAsync(TestContext.Current.CancellationToken);
 
         // Assert
         result.IsError.Should().BeTrue();

@@ -1,4 +1,4 @@
-using API.Models;
+﻿using API.Models;
 
 namespace API.Services {
     public interface IAppDbService {
