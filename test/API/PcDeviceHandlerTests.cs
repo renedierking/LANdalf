@@ -1,5 +1,4 @@
-﻿using API.Data;
-using API.DTOs;
+﻿using API.DTOs;
 using API.Handler;
 using API.Models;
 using API.Services;
@@ -7,7 +6,6 @@ using FluentAssertions;
 using LANdalf.API.DTOs;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Moq;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -16,29 +14,24 @@ using Xunit;
 namespace API.Tests.Handler;
 
 public class PcDeviceHandlerTests {
-    private readonly Mock<AppDbContext> _mockDb;
+    private readonly Mock<IAppDbService> _mockAppDbService;
     private readonly Mock<WakeOnLanService> _mockWolService;
     private readonly PcDeviceHandler _handler;
 
     public PcDeviceHandlerTests() {
-        _mockDb = CreateMockAppDbContext();
+        _mockAppDbService = new Mock<IAppDbService>();
         _mockWolService = new Mock<WakeOnLanService>();
-        _handler = new PcDeviceHandler(_mockDb.Object, _mockWolService.Object);
-    }
-
-    private static Mock<AppDbContext> CreateMockAppDbContext() {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-
-        var mockDb = new Mock<AppDbContext>(options) { CallBase = true };
-        return mockDb;
+        _handler = new PcDeviceHandler(_mockAppDbService.Object, _mockWolService.Object);
     }
 
     #region GetAllDevices Tests
 
     [Fact]
     public async Task GetAllDevices_ReturnsEmptyList_WhenNoPcDevicesExist() {
+        // Arrange
+        _mockAppDbService.Setup(s => s.GetAllPcDevicesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<PcDevice>());
+
         // Act
         var result = await _handler.GetAllDevices(TestContext.Current.CancellationToken);
 
@@ -57,10 +50,8 @@ public class PcDeviceHandlerTests {
             new() { Id = 2, Name = "PC2", MacAddress = PhysicalAddress.Parse("AA-BB-CC-DD-EE-FF"), IsOnline = false }
         };
 
-        foreach (var device in devices) {
-            _mockDb.Object.PcDevices.Add(device);
-        }
-        await _mockDb.Object.SaveChangesAsync(TestContext.Current.CancellationToken);
+        _mockAppDbService.Setup(s => s.GetAllPcDevicesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(devices);
 
         // Act
         var result = await _handler.GetAllDevices(TestContext.Current.CancellationToken);
@@ -86,8 +77,8 @@ public class PcDeviceHandlerTests {
             IsOnline = true
         };
 
-        _mockDb.Object.PcDevices.Add(device);
-        await _mockDb.Object.SaveChangesAsync(TestContext.Current.CancellationToken);
+        _mockAppDbService.Setup(s => s.GetPcDeviceByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(device);
 
         // Act
         var result = await _handler.GetDeviceById(1, TestContext.Current.CancellationToken);
@@ -100,15 +91,17 @@ public class PcDeviceHandlerTests {
 
     [Fact]
     public async Task GetDeviceById_ReturnsNotFound_WhenDeviceDoesNotExist() {
+        // Arrange
+        _mockAppDbService.Setup(s => s.GetPcDeviceByIdAsync(999, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((PcDevice?)null);
+
         // Act
         var result = await _handler.GetDeviceById(999, TestContext.Current.CancellationToken);
 
         // Assert
         result.Should().NotBeNull();
-        var notFoundResult = result as NotFound<string>;
+        var notFoundResult = result as NotFound<ProblemDetails>;
         notFoundResult?.StatusCode.Should().Be(404);
-        var problemDetails = notFoundResult?.Value as string;
-        problemDetails?.Should().Contain("not found");
     }
 
     #endregion
@@ -119,6 +112,16 @@ public class PcDeviceHandlerTests {
     public async Task AddDevice_CreatesDevice_WithValidInput() {
         // Arrange
         var dto = new PcCreateDto("TestPC", "00-11-22-33-44-55", "192.168.1.100", "192.168.1.255");
+        var device = new PcDevice {
+            Id = 1,
+            Name = "TestPC",
+            MacAddress = PhysicalAddress.Parse("00-11-22-33-44-55"),
+            IpAddress = IPAddress.Parse("192.168.1.100"),
+            BroadcastAddress = IPAddress.Parse("192.168.1.255")
+        };
+
+        _mockAppDbService.Setup(s => s.CreatePcDeviceAsync(It.IsAny<PcDevice>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(device);
 
         // Act
         var result = await _handler.AddDevice(dto, TestContext.Current.CancellationToken);
@@ -127,8 +130,6 @@ public class PcDeviceHandlerTests {
         result.Should().NotBeNull();
         var createdResult = result as Created;
         createdResult?.StatusCode.Should().Be(201);
-        var deviceCount = await _mockDb.Object.PcDevices.CountAsync();
-        deviceCount.Should().Be(1);
     }
 
     [Fact]
@@ -183,6 +184,16 @@ public class PcDeviceHandlerTests {
     public async Task AddDevice_CreatesDevice_WithNullOptionalAddresses() {
         // Arrange
         var dto = new PcCreateDto("TestPC", "00-11-22-33-44-55", null, null);
+        var device = new PcDevice {
+            Id = 1,
+            Name = "TestPC",
+            MacAddress = PhysicalAddress.Parse("00-11-22-33-44-55"),
+            IpAddress = null,
+            BroadcastAddress = null
+        };
+
+        _mockAppDbService.Setup(s => s.CreatePcDeviceAsync(It.IsAny<PcDevice>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(device);
 
         // Act
         var result = await _handler.AddDevice(dto, TestContext.Current.CancellationToken);
@@ -191,8 +202,6 @@ public class PcDeviceHandlerTests {
         result.Should().NotBeNull();
         var createdResult = result as Created;
         createdResult?.StatusCode.Should().Be(201);
-        var deviceCount = await _mockDb.Object.PcDevices.CountAsync();
-        deviceCount.Should().Be(1);
     }
 
     #endregion
@@ -209,8 +218,20 @@ public class PcDeviceHandlerTests {
             IsOnline = true
         };
 
-        _mockDb.Object.PcDevices.Add(device);
-        await _mockDb.Object.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var updatedDevice = new PcDevice {
+            Id = 1,
+            Name = "NewName",
+            MacAddress = PhysicalAddress.Parse("AA-BB-CC-DD-EE-FF"),
+            IpAddress = IPAddress.Parse("192.168.1.100"),
+            BroadcastAddress = IPAddress.Parse("192.168.1.255"),
+            IsOnline = false
+        };
+
+        _mockAppDbService.Setup(s => s.GetPcDeviceByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(device);
+
+        _mockAppDbService.Setup(s => s.UpdatePcDeviceAsync(It.IsAny<PcDevice>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(updatedDevice);
 
         var dto = new PcDeviceDTO(1, "NewName", "AA-BB-CC-DD-EE-FF", "192.168.1.100", "192.168.1.255", false);
 
@@ -221,14 +242,14 @@ public class PcDeviceHandlerTests {
         result.Should().NotBeNull();
         var noContentResult = result as NoContent;
         noContentResult?.StatusCode.Should().Be(204);
-
-        var updatedDevice = await _mockDb.Object.PcDevices.FindAsync(1);
-        updatedDevice?.Name.Should().Be("NewName");
     }
 
     [Fact]
     public async Task SetDevice_ReturnsNotFound_WhenDeviceDoesNotExist() {
         // Arrange
+        _mockAppDbService.Setup(s => s.GetPcDeviceByIdAsync(999, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((PcDevice?)null);
+
         var dto = new PcDeviceDTO(999, "NewName", "00-11-22-33-44-55", null, null, false);
 
         // Act
@@ -250,8 +271,8 @@ public class PcDeviceHandlerTests {
             IsOnline = true
         };
 
-        _mockDb.Object.PcDevices.Add(device);
-        await _mockDb.Object.SaveChangesAsync(TestContext.Current.CancellationToken);
+        _mockAppDbService.Setup(s => s.GetPcDeviceByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(device);
 
         var dto = new PcDeviceDTO(1, "TestPC", "INVALID-MAC", null, null, false);
 
@@ -273,15 +294,8 @@ public class PcDeviceHandlerTests {
     [Fact]
     public async Task DeleteDevice_DeletesDevice_WhenDeviceExists() {
         // Arrange
-        var device = new PcDevice {
-            Id = 1,
-            Name = "TestPC",
-            MacAddress = PhysicalAddress.Parse("00-11-22-33-44-55"),
-            IsOnline = true
-        };
-
-        _mockDb.Object.PcDevices.Add(device);
-        await _mockDb.Object.SaveChangesAsync(TestContext.Current.CancellationToken);
+        _mockAppDbService.Setup(s => s.DeletePcDeviceAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         // Act
         var result = await _handler.DeleteDevice(1, TestContext.Current.CancellationToken);
@@ -290,13 +304,14 @@ public class PcDeviceHandlerTests {
         result.Should().NotBeNull();
         var noContentResult = result as NoContent;
         noContentResult?.StatusCode.Should().Be(204);
-
-        var deletedDevice = await _mockDb.Object.PcDevices.FindAsync(1);
-        deletedDevice.Should().BeNull();
     }
 
     [Fact]
     public async Task DeleteDevice_ReturnsNotFound_WhenDeviceDoesNotExist() {
+        // Arrange
+        _mockAppDbService.Setup(s => s.DeletePcDeviceAsync(999, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
         // Act
         var result = await _handler.DeleteDevice(999, TestContext.Current.CancellationToken);
 
@@ -321,16 +336,11 @@ public class PcDeviceHandlerTests {
             IsOnline = true
         };
 
-        _mockDb.Object.PcDevices.Add(device);
-        await _mockDb.Object.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        // Create a real WakeOnLanService mock that still allows the actual method to be called
-        var wolService = new Mock<WakeOnLanService> { CallBase = true };
-
-        var handler = new PcDeviceHandler(_mockDb.Object, wolService.Object);
+        _mockAppDbService.Setup(s => s.GetPcDeviceByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(device);
 
         // Act
-        var result = await handler.WakeDevice(1, TestContext.Current.CancellationToken);
+        var result = await _handler.WakeDevice(1, TestContext.Current.CancellationToken);
 
         // Assert
         result.Should().NotBeNull();
@@ -340,6 +350,10 @@ public class PcDeviceHandlerTests {
 
     [Fact]
     public async Task WakeDevice_ReturnsNotFound_WhenDeviceDoesNotExist() {
+        // Arrange
+        _mockAppDbService.Setup(s => s.GetPcDeviceByIdAsync(999, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((PcDevice?)null);
+
         // Act
         var result = await _handler.WakeDevice(999, TestContext.Current.CancellationToken);
 

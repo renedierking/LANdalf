@@ -1,33 +1,31 @@
-﻿using API.Data;
-using API.DTOs;
+﻿using API.DTOs;
 using API.Models;
 using API.Services;
 using LANdalf.API.DTOs;
 using LANdalf.API.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Net.NetworkInformation;
 
 namespace API.Handler {
     public class PcDeviceHandler {
-        private readonly AppDbContext _db;
+        private readonly IAppDbService _appDbService;
         private readonly WakeOnLanService _wolService;
 
-        public PcDeviceHandler(AppDbContext db, WakeOnLanService wolService) {
-            _db = db;
-            _wolService = wolService;
+        public PcDeviceHandler(IAppDbService appDbService, WakeOnLanService wolService) {
+            _appDbService = appDbService ?? throw new ArgumentNullException(nameof(appDbService));
+            _wolService = wolService ?? throw new ArgumentNullException(nameof(wolService));
         }
 
         public async Task<IResult> GetAllDevices(CancellationToken cancellationToken) {
-            var pcs = await _db.PcDevices.ToListAsync(cancellationToken);
+            var pcs = await _appDbService.GetAllPcDevicesAsync(cancellationToken);
             var result = pcs.Select(pc => pc.ToDto())
                 .ToList();
             return Results.Ok(result);
         }
 
         public async Task<IResult> GetDeviceById(int id, CancellationToken cancellationToken) {
-            var pc = await _db.PcDevices.FindAsync(new object[] { id }, cancellationToken);
+            var pc = await _appDbService.GetPcDeviceByIdAsync(id, cancellationToken);
             if (pc == null) {
                 return CreateNotFoundResult($"PC device with ID {id} not found");
             }
@@ -58,15 +56,14 @@ namespace API.Handler {
                 BroadcastAddress = broadcast
             };
 
-            _db.PcDevices.Add(pc);
-            await _db.SaveChangesAsync(cancellationToken);
+            var createdPc = await _appDbService.CreatePcDeviceAsync(pc, cancellationToken);
 
-            var result = pc.ToDto();
-            return Results.Created($"/api/pc-devices/{pc.Id}", result);
+            var result = createdPc.ToDto();
+            return Results.Created($"/api/pc-devices/{createdPc.Id}", result);
         }
 
         public async Task<IResult> SetDevice(int id, PcDeviceDTO dto, CancellationToken cancellationToken) {
-            var pc = await _db.PcDevices.FindAsync(new object[] { id }, cancellationToken);
+            var pc = await _appDbService.GetPcDeviceByIdAsync(id, cancellationToken);
             if (pc == null) {
                 return CreateNotFoundResult($"PC device with ID {id} not found");
             }
@@ -86,23 +83,21 @@ namespace API.Handler {
             pc.MacAddress = mac;
             pc.IpAddress = ip;
             pc.BroadcastAddress = broadcast;
-            await _db.SaveChangesAsync(cancellationToken);
+            await _appDbService.UpdatePcDeviceAsync(pc, cancellationToken);
 
             return Results.NoContent();
         }
 
         public async Task<IResult> DeleteDevice(int id, CancellationToken cancellationToken) {
-            var pc = await _db.PcDevices.FindAsync(new object[] { id }, cancellationToken);
-            if (pc == null) {
+            var deleted = await _appDbService.DeletePcDeviceAsync(id, cancellationToken);
+            if (!deleted) {
                 return CreateNotFoundResult($"PC device with ID {id} not found");
             }
-            _db.PcDevices.Remove(pc);
-            await _db.SaveChangesAsync(cancellationToken);
             return Results.NoContent();
         }
 
         public async Task<IResult> WakeDevice(int id, CancellationToken cancellationToken) {
-            var pc = await _db.PcDevices.FindAsync(new object[] { id }, cancellationToken);
+            var pc = await _appDbService.GetPcDeviceByIdAsync(id, cancellationToken);
             if (pc == null) {
                 return CreateNotFoundResult($"PC device with ID {id} not found");
             }
