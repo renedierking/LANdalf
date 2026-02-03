@@ -1,0 +1,44 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [master, dev]
+  pull_request:
+    branches: [master, dev]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build API
+        run: dotnet build src/API/API.csproj --configuration Release --no-restore
+
+      - name: Build UI
+        run: dotnet build src/UI/UI.csproj --configuration Release --no-restore
+
+      - name: Test API
+        run: dotnet test test/API/API.Tests.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory ./test-results/api
+
+      - name: Test UI
+        run: dotnet test test/UI/UI.Tests.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory ./test-results/ui
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: ./test-results
+          retention-days: 30
