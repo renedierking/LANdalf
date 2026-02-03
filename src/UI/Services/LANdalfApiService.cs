@@ -1,7 +1,7 @@
 ﻿using LANdalf.UI.ApiClient;
 
 namespace LANdalf.UI.Services {
-    public class LANdalfApiService {
+    public class LANdalfApiService : ILANdalfApiService {
         private readonly LANdalfApiClient _apiClient;
         public LANdalfApiService(LANdalfApiClient apiClient) {
             _apiClient = apiClient;
