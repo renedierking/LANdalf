@@ -6,7 +6,7 @@
 
 **A Modern Wake-on-LAN Management Platform**
 
-[![Latest Release](https://img.shields.io/github/v/release/renedierking/LANdalf?include_prereleases&label=Release&color=brightgreen)](https://github.com/renedierking/LANdalf/releases/latest)
+[![Latest Release](https://img.shields.io/github/v/release/renedierking/LANdalf?include_prereleases&label=Release&color=brightgreen)](https://github.com/renedierking/LANdalf/releases)
 [![.NET Version](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![Blazor](https://img.shields.io/badge/Blazor-WebAssembly-512BD4?logo=blazor&logoColor=white)](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
