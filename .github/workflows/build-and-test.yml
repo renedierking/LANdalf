@@ -30,10 +30,10 @@ jobs:
         run: dotnet build src/UI/UI.csproj --configuration Release --no-restore
 
       - name: Test API
-        run: dotnet test test/API/API.Tests.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory ./test-results/api
+        run: dotnet test test/API/API.Tests.csproj --configuration Release --verbosity normal --logger trx --results-directory ./test-results/api
 
       - name: Test UI
-        run: dotnet test test/UI/UI.Tests.csproj --configuration Release --no-build --verbosity normal --logger trx --results-directory ./test-results/ui
+        run: dotnet test test/UI/UI.Tests.csproj --configuration Release --verbosity normal --logger trx --results-directory ./test-results/ui
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
