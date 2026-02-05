@@ -96,30 +96,43 @@ That's it! 🎉 LANdalf is now running on your network.
 
 ## 📚 Documentation
 
-### Adding a Device
+### Quick Guides
+- 🚀 **[Installation & Setup](docs/INSTALLATION.md)** - Platform-specific setup, troubleshooting, Docker & manual installation
+- 🔧 **[Wake-on-LAN Setup](docs/WOL_SETUP.md)** - Device configuration, network setup, testing WoL functionality
+- 📡 **[API Usage Guide](docs/API_USAGE.md)** - API reference, examples, client libraries, error handling
 
-1. Navigate to the LANdalf web interface
+### In-Depth Documentation
+- 🏗️ **[Architecture Guide](ARCHITECTURE.md)** - System design, technology stack, data flow, database schema
+- 🗺️ **[Project Roadmap](ROADMAP.md)** - Feature roadmap, planned enhancements, vision statement
+
+### Getting Started
+
+#### Adding a Device
+
+1. Navigate to the LANdalf web interface (http://localhost:8080)
 2. Click the **"Add Device"** button
 3. Enter the device information:
    - **Name**: A friendly name for your device
-   - **MAC Address**: The physical address of the network adapter
-   - **IP Address**: (Optional) The device's IP address
-   - **Broadcast Address**: The network broadcast address
+   - **MAC Address**: The physical address of the network adapter (format: `AA:BB:CC:DD:EE:FF`)
+
+
 4. Click **"Save"**
 
-### Waking a Device
+#### Waking a Device
 
 Simply click the **"Wake"** button next to any device in your list. LANdalf will send a magic packet to wake the device.
 
-> **Note**: Wake-on-LAN must be enabled in your device's BIOS/UEFI and network adapter settings.
+> **Note**: Wake-on-LAN must be enabled in your device's BIOS/UEFI and network adapter settings. See the [WoL Setup Guide](docs/WOL_SETUP.md) for detailed instructions.
 
-### API Documentation
+#### Using the API
 
 The API includes comprehensive OpenAPI (Swagger) documentation. When running the API, navigate to:
 
 ```
 http://localhost:5000/scalar/v1
 ```
+
+For detailed API examples and usage patterns, see the [API Usage Guide](docs/API_USAGE.md).
 
 ## 🏗️ Architecture
 

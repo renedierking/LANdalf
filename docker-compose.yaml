@@ -5,12 +5,10 @@ services:
       dockerfile: Dockerfile
     image: landalf-api:latest
     container_name: api
+    network_mode: host
     environment:
-      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_URLS=http://+:5000
       - Cors__FrontendUrl=http://localhost:8080
-    ports:
-      - "5000:8080"   # Host 5000 -> Container HTTP 8080
-      #- "5001:8081"   # Host 5001 -> Container HTTPS 8081
     volumes:
       - api-data:/app/LANdalf_Data:rw
     restart: unless-stopped
@@ -21,8 +19,7 @@ services:
       dockerfile: Dockerfile
     image: landalf-ui:latest
     container_name: ui
-    ports:
-      - "8080:80"     # Host 8080 -> nginx 80
+    network_mode: host
     depends_on:
       - api
     restart: unless-stopped
