@@ -27,7 +27,7 @@ EXPOSE 8081
 # Copy Backend
 COPY --from=build-api /app/publish .
 
-# Copy Frontend zu wwwroot (wird vom Backend served)
+# Copy Frontend to wwwroot (served by the Backend)
 COPY --from=build-ui /app/publish/wwwroot ./wwwroot
 
 ENTRYPOINT ["dotnet", "API.dll"]

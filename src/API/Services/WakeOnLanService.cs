@@ -52,11 +52,11 @@ namespace API.Services {
             if (explicitBroadcast != null) {
                 results.Add(explicitBroadcast);
             } else {
-                // Falls der Container Host-Interfaces sehen kann (z.B. --network host), liefert diese Methode Host-Broadcasts
+                // If the container can see host interfaces (e.g. --network host), this method provides host broadcasts
                 results.AddRange(GetAllBroadcastAddresses());
             }
 
-            // Zusätzliche, vom Betreiber konfigurierbare Broadcast-Adressen (z. B. WOL_BROADCASTS="192.168.1.255,10.0.0.255")
+            // Additional operator-configurable broadcast addresses (e.g. WOL_BROADCASTS="192.168.1.255,10.0.0.255")
             string? env = Environment.GetEnvironmentVariable("WOL_BROADCASTS");
             if (!string.IsNullOrWhiteSpace(env)) {
                 foreach (string part in env.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) {
@@ -68,7 +68,7 @@ namespace API.Services {
                 }
             }
 
-            // Fallback: globaler Broadcast
+            // Fallback: global broadcast
             if (!results.Any()) {
                 results.Add(IPAddress.Broadcast); // 255.255.255.255
             }

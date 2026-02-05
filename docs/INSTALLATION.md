@@ -23,6 +23,23 @@
 - WoL magic packets are properly broadcast on your network
 - Ports 5000 and 8080 must be available on your host
 
+**Platform Support:**
+- **Linux**: ✅ Full support - host network mode works natively
+- **Windows/macOS**: ⚠️ Requires Docker Desktop 4.34+ with host networking enabled (opt-in feature). See [Docker Docs](https://docs.docker.com/engine/network/drivers/host/#docker-desktop) for setup.
+
+**Enabling Host Networking on Docker Desktop (Windows/macOS):**
+1. Sign in to your Docker account in Docker Desktop
+2. Navigate to **Settings**
+3. Under the **Resources** tab, select **Network**
+4. Check **Enable host networking**
+5. Select **Apply and restart**
+
+**⚠️ Docker Desktop Limitations** (Windows/macOS):
+- Host networking works at Layer 4 (TCP/UDP) only
+- Containers cannot bind to host IP addresses directly
+- WoL may not work reliably due to broadcast limitations
+- If WoL doesn't work, use [Manual Setup](#manual-setup) instead
+
 ### One-Command Setup
 
 ```bash
