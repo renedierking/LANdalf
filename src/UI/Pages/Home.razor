@@ -1,9 +1,11 @@
 @page "/"
 @namespace LANdalf.UI.Pages
 @using LANdalf.UI.ApiClient
+@using LANdalf.UI.Services
 @using System.Threading.Tasks
 @inject LANdalfApiService LANdalfApiService
 @inject IDialogService DialogService
+@inject IDeviceValidationService ValidationService
 
 <PageTitle>LANdalf</PageTitle>
 
@@ -17,6 +19,7 @@
                  ReadOnly="false"
                  Bordered="true"
                  EditMode="DataGridEditMode.Form"
+                 EditDialogOptions="new DialogOptions { BackdropClick=false, CloseOnEscapeKey=true }"
                  StartedEditingItem="@(async (PcDeviceDTO dto) => await StartedEditingItem(dto))"
                  CanceledEditingItem="@(async (PcDeviceDTO dto) => await CanceledEditingItem())"
                  CommittedItemChanges="@(async (PcDeviceDTO dto) => await CommittedItemChanges(dto))"
@@ -31,8 +34,49 @@
             </MudButtonGroup>
         </ToolBarContent>
         <Columns>
-            <PropertyColumn Property="x => x.Name" Title="Name" />
-            <PropertyColumn Property="x => x.MacAddress" Title="MAC Address" />
+            <PropertyColumn Property="x => x.Name" Title="Name">
+                <EditTemplate>
+                    <MudTextField @bind-Value="context.Item.Name"
+                                  Label="Name"
+                                  Required="true"
+                                  RequiredError="Name is required"
+                                  MaxLength="64"
+                                  Counter="64"
+                                  Immediate="true"
+                                  Validation="@(new Func<string, string?>(ValidationService.ValidateName))"
+                                  Variant="Variant.Outlined" />
+                </EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="x => x.MacAddress" Title="MAC Address">
+                <EditTemplate>
+                    <MudTextField @bind-Value="context.Item.MacAddress"
+                                  Label="MAC Address"
+                                  Required="true"
+                                  RequiredError="MAC Address is required"
+                                  Immediate="true"
+                                  Validation="@(new Func<string, string?>(ValidationService.ValidateMacAddress))"
+                                  Variant="Variant.Outlined"
+                                  HelperText="Format: XX:XX:XX:XX:XX:XX, XX-XX-XX-XX-XX-XX, or XXXXXXXXXXXX" />
+                </EditTemplate>
+            </PropertyColumn>
+            @*<PropertyColumn Property="x => x.IpAddress" Title="IP Address">
+                <EditTemplate>
+                    <MudTextField @bind-Value="context.Item.IpAddress"
+                                  Label="IP Address (optional)"
+                                  Immediate="true"
+                                  Validation="@(new Func<string, string?>(ValidationService.ValidateIpAddress))"
+                                  Variant="Variant.Outlined" />
+                </EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="x => x.BroadcastAddress" Title="Broadcast Address">
+                <EditTemplate>
+                    <MudTextField @bind-Value="context.Item.BroadcastAddress"
+                                  Label="Broadcast Address (optional)"
+                                  Immediate="true"
+                                  Validation="@(new Func<string, string?>(ValidationService.ValidateIpAddress))"
+                                  Variant="Variant.Outlined" />
+                </EditTemplate>
+            </PropertyColumn>*@
             <TemplateColumn>
                 <CellTemplate>
                     <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
@@ -102,8 +146,7 @@
     }
 
     private async Task CanceledEditingItem() {
-        // update code for backing data here if needed
-        await LoadData();
+        
     }
 
     private async Task CommittedItemChanges(PcDeviceDTO item) {

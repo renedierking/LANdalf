@@ -14,11 +14,14 @@ namespace UI.Tests.Pages;
 public class HomeComponentTests_Simplified : BunitContext {
     private readonly Mock<LANdalfApiClient> _mockApiClient;
     private readonly LANdalfApiService _mockApiService;
+    private readonly Mock<IDeviceValidationService> _mockValidationService;
 
     public HomeComponentTests_Simplified() {
         _mockApiClient = new Mock<LANdalfApiClient>(new System.Net.Http.HttpClient());
         _mockApiService = new LANdalfApiService(_mockApiClient.Object);
+        _mockValidationService = new Mock<IDeviceValidationService>();
         Services.AddScoped(_ => _mockApiService);
+        Services.AddScoped<IDeviceValidationService>(_ => _mockValidationService.Object);
         Services.AddMudServices();
 
         // Setup MudBlazor JSInterop to handle any call without specific setup
