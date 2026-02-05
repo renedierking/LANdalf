@@ -10,7 +10,7 @@ services:
       - ASPNETCORE_URLS=http://+:5000
       - Cors__FrontendUrl=http://localhost:8080
     volumes:
-      - api-data:/app/LANdalf_Data:rw
+      - ./api-data:/app/LANdalf_Data:rw
     restart: unless-stopped
 
   ui:
@@ -23,6 +23,3 @@ services:
     depends_on:
       - api
     restart: unless-stopped
-
-volumes:
-  api-data:
