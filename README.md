@@ -43,6 +43,11 @@ LANdalf is a sleek, modern web application that brings the power of Wake-on-LAN 
 - **Persistent Storage**: SQLite database for reliable data storage
 - **Cross-Platform**: Runs on Windows, Linux, and macOS
 
+## Interface Preview
+
+### Home Interface
+![LANdalf Home Interface](docs/images/home-interface.png)
+
 ## 🚀 Quick Start
 
 ### Using Docker Compose (Recommended)
