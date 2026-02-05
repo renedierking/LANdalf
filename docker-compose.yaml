@@ -7,14 +7,12 @@ services:
     container_name: api
     environment:
       - ASPNETCORE_URLS=http://+:8080
-      - Cors:FrontendUrl=http://localhost:8080
+      - Cors__FrontendUrl=http://localhost:8080
     ports:
       - "5000:8080"   # Host 5000 -> Container HTTP 8080
       #- "5001:8081"   # Host 5001 -> Container HTTPS 8081
     volumes:
       - api-data:/app/LANdalf_Data:rw
-    user: root
-    command: ["/bin/sh", "-c", "mkdir -p /app/LANdalf_Data && chown -R $(id -u):$(id -g) /app/LANdalf_Data || true; exec dotnet API.dll"]
     restart: unless-stopped
 
   ui:

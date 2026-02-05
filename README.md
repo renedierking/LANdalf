@@ -7,6 +7,7 @@
 **A Modern Wake-on-LAN Management Platform**
 
 [![Latest Release](https://img.shields.io/github/v/release/renedierking/LANdalf?include_prereleases&label=Release&color=brightgreen)](https://github.com/renedierking/LANdalf/releases)
+[![Build and Test](https://github.com/renedierking/LANdalf/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/renedierking/LANdalf/actions/workflows/build-and-test.yml)
 [![.NET Version](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![Blazor](https://img.shields.io/badge/Blazor-WebAssembly-512BD4?logo=blazor&logoColor=white)](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -79,17 +80,19 @@ That's it! 🎉 LANdalf is now running on your network.
 
 2. **Run the API**
    ```bash
-   cd src/API
-   dotnet run
+   dotnet run --project src/API/API.csproj
    ```
-   The API will be available at `http://localhost:5000`
+   By default (Development), the API will listen on the ports from `launchSettings.json` (typically `http://localhost:5215` and `https://localhost:7206`).
 
 3. **Run the UI** (in a new terminal)
    ```bash
-   cd src/UI
-   dotnet run
+   dotnet run --project src/UI/UI.csproj
    ```
-   The UI will be available at `http://localhost:7052`
+   By default (Development), the UI will listen on the ports from `launchSettings.json` (typically `http://localhost:5245` and `https://localhost:7052`).
+
+### Configuration
+
+- **CORS (API)**: When running via Docker, CORS is configured via the `Cors__FrontendUrl` environment variable (double-underscore is the cross-platform way to express `Cors:FrontendUrl`).
 
 ## 📚 Documentation
 
