@@ -77,22 +77,18 @@
                                   Variant="Variant.Outlined" />
                 </EditTemplate>
             </PropertyColumn>*@
-            <TemplateColumn>
-                <CellTemplate>
-                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
-                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" OnClick="@(() => DeleteDeviceAsync(context.Item))" />
-                </CellTemplate>
-                @* <EditTemplate>
-                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
-                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" OnClick="@(() => DeleteDeviceAsync(context.Item))" />
-                </EditTemplate> *@
-            </TemplateColumn>
-            <TemplateColumn>
+            <TemplateColumn CellClass="d-flex justify-end">
                 <CellTemplate>
                     <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary"
                                OnClick="@(async () => await WakePcDevice(context.Item))">
                         Start
                     </MudButton>
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn CellClass="d-flex justify-end">
+                <CellTemplate>
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" OnClick="@(() => DeleteDeviceAsync(context.Item))" />
                 </CellTemplate>
             </TemplateColumn>
         </Columns>
