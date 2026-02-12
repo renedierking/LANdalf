@@ -89,7 +89,8 @@
             </TemplateColumn>
             <TemplateColumn>
                 <CellTemplate>
-                    <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary">
+                    <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary"
+                               OnClick="@(async () => await WakePcDevice(context.Item))">
                         Start
                     </MudButton>
                 </CellTemplate>
@@ -146,7 +147,7 @@
     }
 
     private async Task CanceledEditingItem() {
-        
+
     }
 
     private async Task CommittedItemChanges(PcDeviceDTO item) {
@@ -173,5 +174,13 @@
         } else {
             await DialogService.ShowMessageBox("Error", result.Error!.Message);
         }
+    }
+
+    private async Task WakePcDevice(PcDeviceDTO item)
+    {
+        var result = await LANdalfApiService.WakePcDeviceAsync(item.Id, CancellationToken);
+        if (result.IsError) {
+            await DialogService.ShowMessageBox("Error", result.Error!.Message);
+        }        
     }
 }
