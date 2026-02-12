@@ -176,8 +176,7 @@
         }
     }
 
-    private async Task WakePcDevice(PcDeviceDTO item)
-    {
+    private async Task WakePcDevice(PcDeviceDTO item) {
         var result = await LANdalfApiService.WakePcDeviceAsync(item.Id, CancellationToken);
         if (result.IsError) {
             await DialogService.ShowMessageBox("Error", result.Error!.Message);
