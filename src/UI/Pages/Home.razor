@@ -77,7 +77,7 @@
                                   Variant="Variant.Outlined" />
                 </EditTemplate>
             </PropertyColumn>*@
-            <TemplateColumn CellClass="d-flex justify-end">
+            <TemplateColumn>
                 <CellTemplate>
                     <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary"
                                OnClick="@(async () => await WakePcDevice(context.Item))">
@@ -85,7 +85,7 @@
                     </MudButton>
                 </CellTemplate>
             </TemplateColumn>
-            <TemplateColumn CellClass="d-flex justify-end">
+            <TemplateColumn>
                 <CellTemplate>
                     <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
                     <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" OnClick="@(() => DeleteDeviceAsync(context.Item))" />
@@ -103,6 +103,7 @@
 }
 
 @code {
+
     private IEnumerable<PcDeviceDTO> devices = new List<PcDeviceDTO>();
     private MudDataGrid<PcDeviceDTO> _grid = default!;
     private bool IsLoading { get; set; }
@@ -110,6 +111,15 @@
 
     protected override async Task OnInitializedAsync() {
         await LoadData();
+        #if DEBUG
+    // generate devices, if backend is not running or has no devices
+    if (!devices.Any()) {
+    devices = new List<PcDeviceDTO> {
+    new PcDeviceDTO { Id = 1, Name = "Test-PC 1", MacAddress = "00:11:22:33:44:55" },
+    new PcDeviceDTO { Id = 2, Name = "Test-PC 2", MacAddress = "66:77:88:99:AA:BB" }
+    };
+    }
+        #endif
     }
 
     private async Task LoadData() {
@@ -132,6 +142,16 @@
     }
 
     private async Task DeleteDeviceAsync(PcDeviceDTO item) {
+        var msgResult = await DialogService.ShowMessageBox(
+            title: "Delete Device",
+            message: $"Do you really want to delete the device '{item.Name}'?",
+            yesText: "no", // no would be the default, so we have to swap the yes and no text
+            noText: "yes"
+        );
+        if (msgResult.Value) {
+            return;
+        }
+
         var result = await LANdalfApiService.DeletePcDeviceAsync(item.Id, CancellationToken);
         if (result.IsSuccess) {
             await LoadData();
