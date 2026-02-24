@@ -6,6 +6,8 @@ using FluentAssertions;
 using LANdalf.API.DTOs;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -20,8 +22,8 @@ public class PcDeviceHandlerTests {
 
     public PcDeviceHandlerTests() {
         _mockAppDbService = new Mock<IAppDbService>();
-        _mockWolService = new Mock<WakeOnLanService>();
-        _handler = new PcDeviceHandler(_mockAppDbService.Object, _mockWolService.Object);
+        _mockWolService = new Mock<WakeOnLanService>(NullLogger<WakeOnLanService>.Instance);
+        _handler = new PcDeviceHandler(_mockAppDbService.Object, _mockWolService.Object, NullLogger<PcDeviceHandler>.Instance);
     }
 
     #region GetAllDevices Tests

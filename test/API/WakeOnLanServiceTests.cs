@@ -1,5 +1,6 @@
 ﻿using API.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Net;
 using System.Net.NetworkInformation;
 using Xunit;
@@ -10,7 +11,7 @@ public class WakeOnLanServiceTests {
     private readonly WakeOnLanService _service;
 
     public WakeOnLanServiceTests() {
-        _service = new WakeOnLanService();
+        _service = new WakeOnLanService(NullLogger<WakeOnLanService>.Instance);
     }
 
     #region Wake Method Tests

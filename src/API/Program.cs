@@ -9,20 +9,33 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using Serilog;
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 
 namespace API {
     public class Program {
-        public static void Main(string[] args) {
+        public static int Main(string[] args) {
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console()
+                .CreateBootstrapLogger();
+
+            try {
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.Host.UseSerilog((context, services, configuration) => configuration
+                .ReadFrom.Configuration(context.Configuration)
+                .ReadFrom.Services(services)
+                .Enrich.FromLogContext());
 
             var dbPath = Path.Combine(builder.Environment.ContentRootPath, "LANdalf_Data", "landalf.db");
             var dbDir = Path.GetDirectoryName(dbPath);
             if (!string.IsNullOrEmpty(dbDir)) {
                 Directory.CreateDirectory(dbDir);
             }
+
+            Log.Information("Database path: {DbPath}", dbPath);
 
             // Add services to the container.
             builder.Services.AddDbContext<AppDbContext>(o =>
@@ -46,8 +59,8 @@ namespace API {
             builder.Services.AddOpenApi();
 
             string corsPolicyName = "AllowFrontend";
+            var frontendUrl = builder.Configuration["Cors:FrontendUrl"] ?? "https://localhost:7052";
             builder.Services.AddCors(options => {
-                var frontendUrl = builder.Configuration["Cors:FrontendUrl"] ?? "https://localhost:7052";
                 options.AddPolicy(corsPolicyName, policy => {
                     policy.WithOrigins(frontendUrl)
                         .AllowAnyMethod()
@@ -55,6 +68,8 @@ namespace API {
                         .AllowCredentials();
                 });
             });
+
+            Log.Information("CORS allowed origin: {FrontendUrl}", frontendUrl);
 
 
             var app = builder.Build();
@@ -66,10 +81,13 @@ namespace API {
 
             using (var scope = app.Services.CreateScope()) {
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                Log.Information("Applying database migrations...");
                 db.Database.Migrate();
+                Log.Information("Database migrations applied successfully");
             }
 
             app.UseCors(corsPolicyName);
+            app.UseSerilogRequestLogging();
 
             // Global Exception-Handling for all Minimal-API-Endpoints
             app.UseExceptionHandler(exceptionApp => {
@@ -184,7 +202,16 @@ namespace API {
                 .Produces((int)HttpStatusCode.OK)
                 .ProducesProblem((int)HttpStatusCode.NotFound);
 
+            Log.Information("LANdalf API started successfully");
             app.Run();
+
+            return 0;
+            } catch (Exception ex) {
+                Log.Fatal(ex, "LANdalf API terminated unexpectedly");
+                return 1;
+            } finally {
+                Log.CloseAndFlush();
+            }
         }
     }
 }

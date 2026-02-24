@@ -9,8 +9,12 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:5000
       - Cors__FrontendUrl=http://localhost:8080
+      - Serilog__MinimumLevel__Default=Information
+      - Serilog__MinimumLevel__Override__Microsoft.AspNetCore=Warning
+      - Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=Warning
     volumes:
       - ./api-data:/app/LANdalf_Data:rw
+      - ./logs:/app/logs:rw
     restart: unless-stopped
 
   ui:
