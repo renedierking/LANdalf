@@ -103,7 +103,7 @@ namespace API.Handler {
             if (pc == null) {
                 return CreateNotFoundResult($"PC device with ID {id} not found");
             }
-            await _wolService.Wake(pc.MacAddress, pc.BroadcastAddress);
+            await _wolService.Wake(pc.MacAddress, pc.BroadcastAddress, cancellationToken);
             _logger.LogDebug("Wake-on-LAN packet sent to device {DeviceId} ({DeviceName}, MAC: {MacAddress})", id, pc.Name, pc.MacAddress);
             return Results.Ok(new { message = $"Wake-on-LAN packet sent to {pc.Name}" });
         }
