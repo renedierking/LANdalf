@@ -25,6 +25,10 @@ RUN dotnet publish "API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAp
 
 FROM base AS final
 WORKDIR /app
-RUN mkdir -p /app/LANdalf_Data
+RUN mkdir -p /app/LANdalf_Data \
+    && addgroup --system appgroup \
+    && adduser --system --ingroup appgroup appuser \
+    && chown -R appuser:appgroup /app
 COPY --from=publish /app/publish .
+USER appuser
 ENTRYPOINT ["dotnet", "API.dll"]
