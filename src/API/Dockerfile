@@ -25,6 +25,7 @@ RUN dotnet publish "API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAp
 
 FROM base AS final
 WORKDIR /app
-RUN mkdir -p /app/LANdalf_Data
+RUN mkdir -p /app/LANdalf_Data && chown -R $APP_UID /app/LANdalf_Data
+USER $APP_UID
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "API.dll"]
