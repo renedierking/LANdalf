@@ -1,7 +1,7 @@
 services:
   api:
     build:
-      context: ./src/API
+      context: ../../src/API
       dockerfile: Dockerfile
     image: landalf-api:latest
     container_name: api
@@ -19,7 +19,7 @@ services:
 
   ui:
     build:
-      context: ./src/UI
+      context: ../../src/UI
       dockerfile: Dockerfile
     image: landalf-ui:latest
     container_name: ui
