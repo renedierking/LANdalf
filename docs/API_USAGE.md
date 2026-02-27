@@ -275,7 +275,9 @@ Sends a magic packet to wake the specified device.
 
 **Response (200 OK):**
 ```json
-{}
+{
+  "message": "Wake-on-LAN packet sent."
+}
 ```
 
 **Response (404 Not Found):**

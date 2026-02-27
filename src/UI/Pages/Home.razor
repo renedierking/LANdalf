@@ -112,13 +112,13 @@
     protected override async Task OnInitializedAsync() {
         await LoadData();
         #if DEBUG
-    // generate devices, if backend is not running or has no devices
-    if (!devices.Any()) {
-    devices = new List<PcDeviceDTO> {
-    new PcDeviceDTO { Id = 1, Name = "Test-PC 1", MacAddress = "00:11:22:33:44:55" },
-    new PcDeviceDTO { Id = 2, Name = "Test-PC 2", MacAddress = "66:77:88:99:AA:BB" }
-    };
-    }
+        // generate devices, if backend is not running or has no devices
+        if (!devices.Any()) {
+            devices = new List<PcDeviceDTO> {
+                new PcDeviceDTO { Id = 1, Name = "Test-PC 1", MacAddress = "00:11:22:33:44:55" },
+                new PcDeviceDTO { Id = 2, Name = "Test-PC 2", MacAddress = "66:77:88:99:AA:BB" }
+            };
+        }
         #endif
     }
 
@@ -148,7 +148,7 @@
             yesText: "no", // no would be the default, so we have to swap the yes and no text
             noText: "yes"
         );
-        if (msgResult.Value) {
+        if (msgResult is null || msgResult.Value) {
             return;
         }
 

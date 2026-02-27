@@ -34,7 +34,7 @@ Device (off)
 - Device must be sleeping, not fully powered off
 - Device must be on same network or have WoL capable router
 - Power supply supporting wake signals (not in S5 state)
-- Ports 5000 and 8080 available (if using Docker)
+- Port 5000 and a UI port (80 by default, configurable via `NGINX_PORT`) available (if using Docker)
 
 ---
 
@@ -358,10 +358,11 @@ Standard WoL ports:
 - **Port 7**: Default (UDP)
 - **Port 9**: Alternative (UDP)
 
-LANdalf uses port 9 by default. If blocked:
-1. Try port 7 instead
-2. Check firewall rules
-3. Verify port isn't blocked by antivirus
+LANdalf sends WoL magic packets to both UDP ports 7 and 9 by default for maximum compatibility.
+If WoL is not working:
+1. Ensure UDP ports 7 and 9 are allowed on your network equipment
+2. Check firewall rules for both ports
+3. Verify these ports aren't blocked by antivirus
 
 ### Directed Broadcast
 
