@@ -41,7 +41,7 @@
                                   MaxLength="64"
                                   Counter="64"
                                   Immediate="true"
-                                  Validation="@(new Func<string, string?>(ValidationService.ValidateName))"
+                                  Validation="@(new Func<string?, string?>(ValidationService.ValidateName))"
                                   Variant="Variant.Outlined" />
                 </EditTemplate>
             </PropertyColumn>
@@ -52,7 +52,7 @@
                                   Required="true"
                                   RequiredError="MAC Address is required"
                                   Immediate="true"
-                                  Validation="@(new Func<string, string?>(ValidationService.ValidateMacAddress))"
+                                  Validation="@(new Func<string?, string?>(ValidationService.ValidateMacAddress))"
                                   Variant="Variant.Outlined"
                                   HelperText="Format: XX:XX:XX:XX:XX:XX, XX-XX-XX-XX-XX-XX, or XXXXXXXXXXXX" />
                 </EditTemplate>
@@ -134,10 +134,10 @@
         var msgResult = await DialogService.ShowMessageBox(
             title: "Delete Device",
             message: $"Do you really want to delete the device '{item.Name}'?",
-            yesText: "no", // no would be the default, so we have to swap the yes and no text
-            noText: "yes"
+            yesText: "Delete",
+            noText: "Cancel"
         );
-        if (msgResult is null || msgResult.Value) {
+        if (msgResult is not true) {
             return;
         }
 
