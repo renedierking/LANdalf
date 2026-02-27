@@ -1,7 +1,10 @@
 services:
   api:
-    image: ghcr.io/renedierking/landalf-api:latest
-    container_name: landalf-api
+    build:
+      context: ./src/API
+      dockerfile: Dockerfile
+    image: landalf-api:latest
+    container_name: api
     network_mode: host
     environment:
       - ASPNETCORE_URLS=http://+:5000
@@ -15,8 +18,11 @@ services:
     restart: unless-stopped
 
   ui:
-    image: ghcr.io/renedierking/landalf-ui:latest
-    container_name: landalf-ui
+    build:
+      context: ./src/UI
+      dockerfile: Dockerfile
+    image: landalf-ui:latest
+    container_name: ui
     network_mode: host
     depends_on:
       - api
