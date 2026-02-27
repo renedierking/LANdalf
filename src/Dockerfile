@@ -30,4 +30,5 @@ COPY --from=build-api /app/publish .
 # Copy Frontend to wwwroot (served by the Backend)
 COPY --from=build-ui /app/publish/wwwroot ./wwwroot
 
+USER $APP_UID
 ENTRYPOINT ["dotnet", "API.dll"]
