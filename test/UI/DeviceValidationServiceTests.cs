@@ -160,6 +160,8 @@ public class DeviceValidationServiceTests {
     [InlineData("00:11:22:33:44:5")]  // Last octet too short
     [InlineData("0011223344")]  // Too short (no separator format)
     [InlineData("00112233445566")]  // Too long (no separator format)
+    [InlineData("AA:BB-CC:DD-EE:FF")]  // Mixed separators
+    [InlineData("AA-BB:CC-DD:EE-FF")]  // Mixed separators
     public void ValidateMacAddress_WithInvalidFormat_ReturnsError(string macAddress) {
         // Act
         var result = _service.ValidateMacAddress(macAddress);
