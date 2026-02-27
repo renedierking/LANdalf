@@ -109,15 +109,6 @@
 
     protected override async Task OnInitializedAsync() {
         await LoadData();
-        #if DEBUG
-        // generate devices, if backend is not running or has no devices
-        if (!devices.Any()) {
-            devices = new List<PcDeviceDTO> {
-                new PcDeviceDTO { Id = 1, Name = "Test-PC 1", MacAddress = "00:11:22:33:44:55" },
-                new PcDeviceDTO { Id = 2, Name = "Test-PC 2", MacAddress = "66:77:88:99:AA:BB" }
-            };
-        }
-        #endif
     }
 
     private async Task LoadData() {
@@ -125,7 +116,7 @@
             IsLoading = true;
             var result = await LANdalfApiService.GetAllPcDevicesAsync(CancellationToken);
             if (result.IsError) {
-                // Error anzeigen
+                await DialogService.ShowMessageBox("Error", result.Error!.Message);
             } else {
                 devices = result.Value!;
             }
@@ -168,7 +159,6 @@
             if (resultAdd.IsSuccess) {
                 await LoadData();
             } else {
-                // Fehler anzeigen
                 await DialogService.ShowMessageBox("Error", resultAdd.Error!.Message);
             }
             return;
