@@ -12,6 +12,10 @@ RUN dotnet publish "./UI.csproj" -c Release -o /app/publish
 
 # Runtime stage - nginx
 FROM nginx:alpine AS runtime
+
+# Install gettext for envsubst support
+RUN apk add --no-cache gettext
+
 WORKDIR /usr/share/nginx/html
 
 # Copy published Blazor WASM files
