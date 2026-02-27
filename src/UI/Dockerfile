@@ -12,7 +12,7 @@ RUN dotnet publish "./UI.csproj" -c Release -o /app/publish
 
 # Runtime stage - nginx
 FROM nginx:alpine AS runtime
-WORKDIR /etc/nginx/html
+WORKDIR /usr/share/nginx/html
 
 # Copy published Blazor WASM files
 COPY --from=build /app/publish/wwwroot .
