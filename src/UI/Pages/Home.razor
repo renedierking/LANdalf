@@ -20,8 +20,6 @@
                  Bordered="true"
                  EditMode="DataGridEditMode.Form"
                  EditDialogOptions="new DialogOptions { BackdropClick=false, CloseOnEscapeKey=true }"
-                 StartedEditingItem="@(async (PcDeviceDTO dto) => await StartedEditingItem(dto))"
-                 CanceledEditingItem="@(async (PcDeviceDTO dto) => await CanceledEditingItem())"
                  CommittedItemChanges="@(async (PcDeviceDTO dto) => await CommittedItemChanges(dto))"
                  EditTrigger="DataGridEditTrigger.Manual">
         <ToolBarContent>
@@ -156,14 +154,6 @@
         if (result.IsSuccess) {
             await LoadData();
         }
-    }
-
-    private async Task StartedEditingItem(PcDeviceDTO item) {
-
-    }
-
-    private async Task CanceledEditingItem() {
-
     }
 
     private async Task CommittedItemChanges(PcDeviceDTO item) {
