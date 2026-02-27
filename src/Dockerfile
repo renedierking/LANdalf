@@ -30,4 +30,8 @@ COPY --from=build-api /app/publish .
 # Copy Frontend to wwwroot (served by the Backend)
 COPY --from=build-ui /app/publish/wwwroot ./wwwroot
 
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser \
+    && chown -R appuser:appgroup /app
+USER appuser
+
 ENTRYPOINT ["dotnet", "API.dll"]
