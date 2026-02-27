@@ -28,5 +28,5 @@ RUN chown -R nginx:nginx /usr/share/nginx/html || true
 
 ENV NGINX_PORT=80
 
-EXPOSE 80
+EXPOSE ${NGINX_PORT}
 ENTRYPOINT ["/docker-entrypoint.sh"]
