@@ -299,9 +299,9 @@ Error: Invalid MAC Address
 ## Platform-Specific Notes
 
 ### Windows
-- ✅ Docker Desktop: Full support
-- ✅ Manual setup: Full support
-- Note: Windows Firewall may block ports—add exception or use Docker
+- ✅ Docker Desktop: UI/API supported; WoL via Docker host networking is limited/experimental (see **Host Network Mode** above)
+- ✅ Manual setup: Full support (recommended for reliable WoL)
+- Note: Windows Firewall may block ports—add exceptions for LANdalf services. Docker Desktop host networking is opt-in and may not reliably support WoL broadcasts.
 
 ### Linux (Ubuntu/Debian)
 ```bash
