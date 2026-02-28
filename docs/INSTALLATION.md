@@ -37,8 +37,10 @@
 **⚠️ Docker Desktop Limitations** (Windows/macOS):
 - Host networking works at Layer 4 (TCP/UDP) only
 - Containers cannot bind to host IP addresses directly
-- WoL may not work reliably due to broadcast limitations
+- **WoL broadcasts go to the Docker VM's internal network by default** — you must set `WOL_BROADCASTS` to your real LAN broadcast address (see below)
 - If WoL doesn't work, use [Manual Setup](#manual-setup) instead
+
+> **🔧 WoL on Docker Desktop (Windows/macOS):** Add `WOL_BROADCASTS=<your-LAN-broadcast>` to the API service's environment in `docker-compose.yaml`. For example, if your network is `192.168.178.0/24`, add `WOL_BROADCASTS=192.168.178.255`. Without this, magic packets are sent to the Docker VM's internal network and will not reach your devices. See the [WoL Setup Guide](WOL_SETUP.md#docker-desktop-windowsmacos-packets-sent-to-wrong-network) for details.
 
 ### One-Command Setup
 

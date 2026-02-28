@@ -60,7 +60,19 @@ namespace API.Services {
                 results.Add(explicitBroadcast);
             } else {
                 // If the container can see host interfaces (e.g. --network host), this method provides host broadcasts
-                results.AddRange(GetAllBroadcastAddresses());
+                var detected = GetAllBroadcastAddresses().ToList();
+                results.AddRange(detected);
+
+                // Warn if the only detected addresses are in known Docker/VM NAT ranges,
+                // which means magic packets will not reach the real LAN.
+                if (detected.Count > 0 && detected.All(IsDockerOrVmNetwork)) {
+                    _logger.LogWarning(
+                        "Auto-detected broadcast addresses ({Addresses}) appear to be Docker/VM internal networks. "
+                        + "WoL packets will likely NOT reach your physical LAN. "
+                        + "Set the WOL_BROADCASTS environment variable to your real LAN broadcast address "
+                        + "(e.g. WOL_BROADCASTS=192.168.178.255) or set a per-device broadcast address in the UI.",
+                        string.Join(", ", detected));
+                }
             }
 
             // Additional operator-configurable broadcast addresses (e.g. WOL_BROADCASTS="192.168.1.255,10.0.0.255")
@@ -82,7 +94,25 @@ namespace API.Services {
                 results.Add(IPAddress.Broadcast); // 255.255.255.255
             }
 
+            _logger.LogInformation("WoL broadcast targets: {Targets}", string.Join(", ", results));
+
             return results;
+        }
+
+        private static bool IsDockerOrVmNetwork(IPAddress address) {
+            byte[] bytes = address.GetAddressBytes();
+            if (bytes.Length != 4) return false;
+
+            // Docker Desktop NAT: 192.168.65.0/24
+            if (bytes[0] == 192 && bytes[1] == 168 && bytes[2] == 65) return true;
+
+            // Docker default bridge: 172.17.0.0/16
+            if (bytes[0] == 172 && bytes[1] == 17) return true;
+
+            // Common Docker bridge networks: 172.18-31.0.0/16
+            if (bytes[0] == 172 && bytes[1] >= 18 && bytes[1] <= 31) return true;
+
+            return false;
         }
 
         private IEnumerable<IPAddress> GetAllBroadcastAddresses() {

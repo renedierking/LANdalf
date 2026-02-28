@@ -9,6 +9,8 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:5000
       - Cors__FrontendUrl=http://localhost:8080
+      # Docker Desktop (Windows/macOS): Uncomment and set your LAN broadcast address.
+      # - WOL_BROADCASTS=192.168.178.255
       - Serilog__MinimumLevel__Default=Information
       - Serilog__MinimumLevel__Override__Microsoft.AspNetCore=Warning
       - Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=Warning
