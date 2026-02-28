@@ -27,14 +27,13 @@ Currently, LANdalf v1.0 has **no authentication** — it assumes trusted local n
 
 ## Base Endpoints
 
-All endpoints follow REST conventions:
 ```
-GET    /api/v1/pc-devices         → List all devices
-GET    /api/v1/pc-devices/{id}    → Get one device
-POST   /api/v1/pc-devices         → Create device
-PUT    /api/v1/pc-devices/{id}    → Update device
-DELETE /api/v1/pc-devices/{id}    → Delete device
-POST   /api/v1/pc-devices/{id}/wake → Wake device
+GET    /api/v1/pc-devices              → List all devices
+GET    /api/v1/pc-devices/{id}         → Get one device
+POST   /api/v1/pc-devices/add          → Create device
+POST   /api/v1/pc-devices/{id}/set     → Update device
+POST   /api/v1/pc-devices/{id}/delete  → Delete device
+POST   /api/v1/pc-devices/{id}/wake    → Wake device
 ```
 
 ---
@@ -53,22 +52,18 @@ GET /api/v1/pc-devices
   {
     "id": 1,
     "name": "Gaming PC",
-    "macAddress": "AA:BB:CC:DD:EE:FF",
+    "macAddress": "AA-BB-CC-DD-EE-FF",
     "ipAddress": "192.168.1.100",
     "broadcastAddress": "192.168.1.255",
-    "description": "Main gaming workstation",
-    "createdAt": "2026-02-05T10:30:00Z",
-    "lastModified": "2026-02-05T10:30:00Z"
+    "isOnline": false
   },
   {
     "id": 2,
     "name": "Media Server",
-    "macAddress": "11:22:33:44:55:66",
+    "macAddress": "11-22-33-44-55-66",
     "ipAddress": "192.168.1.50",
     "broadcastAddress": "192.168.1.255",
-    "description": null,
-    "createdAt": "2026-02-05T10:31:00Z",
-    "lastModified": "2026-02-05T10:31:00Z"
+    "isOnline": true
   }
 ]
 ```
@@ -100,12 +95,10 @@ GET /api/v1/pc-devices/{id}
 {
   "id": 1,
   "name": "Gaming PC",
-  "macAddress": "AA:BB:CC:DD:EE:FF",
+  "macAddress": "AA-BB-CC-DD-EE-FF",
   "ipAddress": "192.168.1.100",
   "broadcastAddress": "192.168.1.255",
-  "description": "Main gaming workstation",
-  "createdAt": "2026-02-05T10:30:00Z",
-  "lastModified": "2026-02-05T10:30:00Z"
+  "isOnline": false
 }
 ```
 
@@ -130,15 +123,14 @@ curl http://localhost:5000/api/v1/pc-devices/1
 ### 3. Create Device
 
 ```http
-POST /api/v1/pc-devices
+POST /api/v1/pc-devices/add
 Content-Type: application/json
 
 {
   "name": "New Device",
   "macAddress": "AA:BB:CC:DD:EE:FF",
   "ipAddress": "192.168.1.100",
-  "broadcastAddress": "192.168.1.255",
-  "description": "Optional description"
+  "broadcastAddress": "192.168.1.255"
 }
 ```
 
@@ -149,19 +141,16 @@ Content-Type: application/json
 **Optional Fields:**
 - `ipAddress`: Device IP address (string)
 - `broadcastAddress`: Network broadcast address (string)
-- `description`: Device description (string, max 500 chars)
 
 **Response (201 Created):**
 ```json
 {
   "id": 3,
   "name": "New Device",
-  "macAddress": "AA:BB:CC:DD:EE:FF",
+  "macAddress": "AA-BB-CC-DD-EE-FF",
   "ipAddress": "192.168.1.100",
   "broadcastAddress": "192.168.1.255",
-  "description": "Optional description",
-  "createdAt": "2026-02-05T11:00:00Z",
-  "lastModified": "2026-02-05T11:00:00Z"
+  "isOnline": false
 }
 ```
 
@@ -178,14 +167,13 @@ Content-Type: application/json
 
 **cURL Example:**
 ```bash
-curl -X POST http://localhost:5000/api/v1/pc-devices \
+curl -X POST http://localhost:5000/api/v1/pc-devices/add \
   -H "Content-Type: application/json" \
   -d '{
     "name": "New Device",
     "macAddress": "AA:BB:CC:DD:EE:FF",
     "ipAddress": "192.168.1.100",
-    "broadcastAddress": "192.168.1.255",
-    "description": "Test device"
+    "broadcastAddress": "192.168.1.255"
   }'
 ```
 
@@ -196,10 +184,9 @@ $body = @{
     macAddress = "AA:BB:CC:DD:EE:FF"
     ipAddress = "192.168.1.100"
     broadcastAddress = "192.168.1.255"
-    description = "Test device"
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri "http://localhost:5000/api/v1/pc-devices" `
+Invoke-RestMethod -Uri "http://localhost:5000/api/v1/pc-devices/add" `
   -Method POST `
   -ContentType "application/json" `
   -Body $body
@@ -210,41 +197,32 @@ Invoke-RestMethod -Uri "http://localhost:5000/api/v1/pc-devices" `
 ### 4. Update Device
 
 ```http
-PUT /api/v1/pc-devices/{id}
+POST /api/v1/pc-devices/{id}/set
 Content-Type: application/json
 
-{
-  "name": "Updated Name",
-  "macAddress": "AA:BB:CC:DD:EE:FF",
-  "ipAddress": "192.168.1.101",
-  "broadcastAddress": "192.168.1.255",
-  "description": "Updated description"
-}
-```
-
-**Response (200 OK):**
-```json
 {
   "id": 1,
   "name": "Updated Name",
   "macAddress": "AA:BB:CC:DD:EE:FF",
   "ipAddress": "192.168.1.101",
   "broadcastAddress": "192.168.1.255",
-  "description": "Updated description",
-  "createdAt": "2026-02-05T10:30:00Z",
-  "lastModified": "2026-02-05T11:05:00Z"
+  "isOnline": false
 }
 ```
 
+**Response (204 No Content)**
+
 **cURL Example:**
 ```bash
-curl -X PUT http://localhost:5000/api/v1/pc-devices/1 \
+curl -X POST http://localhost:5000/api/v1/pc-devices/1/set \
   -H "Content-Type: application/json" \
   -d '{
+    "id": 1,
     "name": "Updated Name",
     "macAddress": "AA:BB:CC:DD:EE:FF",
     "ipAddress": "192.168.1.101",
-    "broadcastAddress": "192.168.1.255"
+    "broadcastAddress": "192.168.1.255",
+    "isOnline": false
   }'
 ```
 
@@ -253,14 +231,14 @@ curl -X PUT http://localhost:5000/api/v1/pc-devices/1 \
 ### 5. Delete Device
 
 ```http
-DELETE /api/v1/pc-devices/{id}
+POST /api/v1/pc-devices/{id}/delete
 ```
 
 **Response (204 No Content)**
 
 **cURL Example:**
 ```bash
-curl -X DELETE http://localhost:5000/api/v1/pc-devices/1
+curl -X POST http://localhost:5000/api/v1/pc-devices/1/delete
 ```
 
 ---
@@ -276,7 +254,7 @@ Sends a magic packet to wake the specified device.
 **Response (200 OK):**
 ```json
 {
-  "message": "Wake-on-LAN packet sent."
+  "message": "Wake-on-LAN packet sent to Gaming PC"
 }
 ```
 
@@ -319,9 +297,9 @@ All error responses follow [RFC 7807 Problem Details](https://tools.ietf.org/htm
 ```
 
 ### Common Status Codes
-- `200 OK`: Successful GET, POST (wake), PUT
+- `200 OK`: Successful GET, POST (wake)
 - `201 Created`: Successful POST (create device)
-- `204 No Content`: Successful DELETE
+- `204 No Content`: Successful POST (set, delete)
 - `400 Bad Request`: Invalid input (bad MAC format, validation error)
 - `404 Not Found`: Device not found
 - `500 Internal Server Error`: Server error (check logs)
@@ -343,7 +321,7 @@ $newDevice = @{
     broadcastAddress = "192.168.1.255"
 } | ConvertTo-Json
 
-$device = Invoke-RestMethod -Uri "$baseUrl/pc-devices" `
+$device = Invoke-RestMethod -Uri "$baseUrl/pc-devices/add" `
   -Method POST `
   -ContentType "application/json" `
   -Body $newDevice
@@ -360,7 +338,7 @@ Invoke-RestMethod -Uri "$baseUrl/pc-devices/$deviceId/wake" -Method POST
 Write-Host "Wake command sent"
 
 # 4. Delete device
-Invoke-RestMethod -Uri "$baseUrl/pc-devices/$deviceId" -Method DELETE
+Invoke-RestMethod -Uri "$baseUrl/pc-devices/$deviceId/delete" -Method POST
 Write-Host "Device deleted"
 ```
 
@@ -371,7 +349,7 @@ API="http://localhost:5000/api/v1"
 
 # Create multiple devices
 for i in 1 2 3; do
-  curl -X POST "$API/pc-devices" \
+  curl -X POST "$API/pc-devices/add" \
     -H "Content-Type: application/json" \
     -d "{
       \"name\": \"Device $i\",
@@ -404,7 +382,7 @@ The API includes CORS headers for cross-origin requests:
 
 ```http
 Access-Control-Allow-Origin: <Frontend URL from config>
-Access-Control-Allow-Methods: GET, POST, PUT, DELETE
+Access-Control-Allow-Methods: GET, POST
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Credentials: true
 ```
