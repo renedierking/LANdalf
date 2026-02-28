@@ -283,6 +283,69 @@ wakeonlan -i 192.168.1.255 AA:BB:CC:DD:EE:FF
 
 ## Troubleshooting WoL
 
+### Docker Desktop (Windows/macOS): Packets Sent to Wrong Network
+
+If you run LANdalf via Docker Compose on **Windows or macOS** with Docker Desktop, WoL magic packets may be sent to the wrong broadcast address (e.g. `192.168.65.255` instead of your real LAN like `192.168.178.255`).
+
+#### Why This Happens
+
+Docker Desktop runs containers inside a lightweight Linux VM (WSL2 on Windows, HyperKit/Virtualization.framework on macOS). Even with `network_mode: host`, the container shares the **VM's** network stack — not your physical host's. LANdalf's auto-detection enumerates network interfaces and computes broadcast addresses, but it sees the VM's virtual NIC (`192.168.65.x`) instead of your real LAN.
+
+You can confirm this by checking the container logs for a line like:
+```
+WoL broadcast targets: 192.168.65.255
+```
+If the logged address is not your LAN broadcast, the fix below is needed.
+
+#### Fix: Set `WOL_BROADCASTS` Environment Variable
+
+Add your real LAN broadcast address in `docker-compose.yaml`:
+
+```yaml
+services:
+  api:
+    environment:
+      - WOL_BROADCASTS=192.168.178.255   # ← your actual LAN broadcast
+```
+
+To find your LAN broadcast address:
+```powershell
+# Windows PowerShell
+ipconfig
+# Example output: IP 192.168.178.23, Subnet 255.255.255.0 → Broadcast = 192.168.178.255
+```
+```bash
+# Linux/macOS
+ip addr show   # or: ifconfig
+```
+
+Restart the containers after the change:
+```bash
+docker compose down
+docker compose up -d
+```
+
+Verify in the logs that the correct broadcast address is now used:
+```bash
+docker compose logs api | grep "broadcast targets"
+# Should show: WoL broadcast targets: 192.168.178.255
+```
+
+#### Alternative: Per-Device Broadcast Address
+
+Instead of (or in addition to) the environment variable, you can set the broadcast address on each device in the LANdalf UI. When a device has an explicit broadcast address, it takes precedence over auto-detection.
+
+#### Alternative: Run API Natively (Most Reliable)
+
+For the most reliable WoL on Windows/macOS, run the API directly on the host:
+```bash
+cd src/API
+dotnet run
+```
+This bypasses Docker entirely — auto-detection will see your real NIC and compute the correct broadcast address.
+
+---
+
 ### Device Won't Wake
 
 #### Checklist

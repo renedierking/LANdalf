@@ -6,6 +6,11 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:5000
       - Cors__FrontendUrl=http://localhost # Adjust if NGINX_PORT != 80, e.g. http://localhost:8080
+      # Docker Desktop (Windows/macOS): WoL auto-detection sees the VM's virtual NIC, not your
+      # real LAN. Uncomment and set your LAN broadcast address for magic packets to reach devices.
+      # Example: 192.168.178.255 for a 192.168.178.0/24 network.
+      # On Linux with network_mode: host you can usually leave this commented out.
+      # - WOL_BROADCASTS=192.168.178.255
       - Serilog__MinimumLevel__Default=Information
       - Serilog__MinimumLevel__Override__Microsoft.AspNetCore=Warning
       - Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=Warning

@@ -48,6 +48,8 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:5000
       - Cors__FrontendUrl=http://localhost # Adjust if NGINX_PORT != 80, e.g. http://localhost:8080
+      # Docker Desktop (Windows/macOS): Uncomment and set your LAN broadcast for WoL to work.
+      # - WOL_BROADCASTS=192.168.178.255
       - Serilog__MinimumLevel__Default=Information
       - Serilog__MinimumLevel__Override__Microsoft.AspNetCore=Warning
       - Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=Warning
@@ -80,6 +82,8 @@ docker compose up -d
 - **API Docs**: http://localhost:5000/scalar/v1
 
 > **Custom UI port:** Set `NGINX_PORT` (e.g. `8080`) and update `Cors__FrontendUrl` accordingly (e.g. `http://localhost:8080`).
+
+> **Docker Desktop (Windows/macOS):** WoL magic packets won't reach your LAN by default. Uncomment `WOL_BROADCASTS` in the compose file and set it to your LAN broadcast address (e.g. `192.168.178.255`). See the [WoL Setup Guide](docs/WOL_SETUP.md#docker-desktop-windowsmacos-packets-sent-to-wrong-network) for details.
 
 > For manual setup, platform-specific instructions, and troubleshooting, see the **[Installation Guide](docs/INSTALLATION.md)**.
 
