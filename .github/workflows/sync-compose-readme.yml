@@ -1,0 +1,53 @@
+name: Sync docker-compose to README
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'docker-compose.yaml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update README with docker-compose content
+        run: |
+          # Build replacement block from current docker-compose.yaml
+          {
+            echo '<!-- BEGIN_DOCKER_COMPOSE -->'
+            echo '```yaml'
+            cat docker-compose.yaml
+            echo '```'
+            echo '<!-- END_DOCKER_COMPOSE -->'
+          } > /tmp/compose-block.txt
+
+          # Replace everything between markers (inclusive) in README.md
+          perl -0777 -i -pe '
+            BEGIN {
+              local $/;
+              open my $fh, "<", "/tmp/compose-block.txt" or die;
+              $replacement = <$fh>;
+              close $fh;
+              chomp $replacement;
+            }
+            s/<!-- BEGIN_DOCKER_COMPOSE -->.*?<!-- END_DOCKER_COMPOSE -->/$replacement/s
+          ' README.md
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git diff --quiet README.md || echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "docs: sync docker-compose.yaml into README.md"
+          git push
