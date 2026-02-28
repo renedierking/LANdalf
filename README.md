@@ -52,8 +52,8 @@ services:
       - Serilog__MinimumLevel__Override__Microsoft.AspNetCore=Warning
       - Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=Warning
     volumes:
-      - ./api-data:/app/LANdalf_Data:rw
-      - ./logs:/app/logs:rw
+      - api-data:/app/LANdalf_Data
+      - api-logs:/app/logs
     restart: unless-stopped
 
   ui:
@@ -65,6 +65,9 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+volumes:
+  api-data:
+  api-logs:
 ```
 <!-- END_DOCKER_COMPOSE -->
 
