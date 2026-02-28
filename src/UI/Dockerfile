@@ -1,5 +1,6 @@
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ENV DOTNET_EnableWriteXorExecute=0
 WORKDIR /src
 
 # Copy the project file (when building from src/UI as build context)
