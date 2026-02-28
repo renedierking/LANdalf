@@ -27,7 +27,6 @@ Currently, LANdalf v1.0 has **no authentication** — it assumes trusted local n
 
 ## Base Endpoints
 
-All endpoints follow REST conventions:
 ```
 GET    /api/v1/pc-devices              → List all devices
 GET    /api/v1/pc-devices/{id}         → Get one device
@@ -53,18 +52,18 @@ GET /api/v1/pc-devices
   {
     "id": 1,
     "name": "Gaming PC",
-    "macAddress": "AA:BB:CC:DD:EE:FF",
+    "macAddress": "AA-BB-CC-DD-EE-FF",
     "ipAddress": "192.168.1.100",
     "broadcastAddress": "192.168.1.255",
-    "isOnline": true
+    "isOnline": false
   },
   {
     "id": 2,
     "name": "Media Server",
-    "macAddress": "11:22:33:44:55:66",
+    "macAddress": "11-22-33-44-55-66",
     "ipAddress": "192.168.1.50",
     "broadcastAddress": "192.168.1.255",
-    "isOnline": false
+    "isOnline": true
   }
 ]
 ```
@@ -96,10 +95,10 @@ GET /api/v1/pc-devices/{id}
 {
   "id": 1,
   "name": "Gaming PC",
-  "macAddress": "AA:BB:CC:DD:EE:FF",
+  "macAddress": "AA-BB-CC-DD-EE-FF",
   "ipAddress": "192.168.1.100",
   "broadcastAddress": "192.168.1.255",
-  "isOnline": true
+  "isOnline": false
 }
 ```
 
@@ -148,7 +147,7 @@ Content-Type: application/json
 {
   "id": 3,
   "name": "New Device",
-  "macAddress": "AA:BB:CC:DD:EE:FF",
+  "macAddress": "AA-BB-CC-DD-EE-FF",
   "ipAddress": "192.168.1.100",
   "broadcastAddress": "192.168.1.255",
   "isOnline": false
@@ -202,34 +201,28 @@ POST /api/v1/pc-devices/{id}/set
 Content-Type: application/json
 
 {
-  "name": "Updated Name",
-  "macAddress": "AA:BB:CC:DD:EE:FF",
-  "ipAddress": "192.168.1.101",
-  "broadcastAddress": "192.168.1.255"
-}
-```
-
-**Response (200 OK):**
-```json
-{
   "id": 1,
   "name": "Updated Name",
   "macAddress": "AA:BB:CC:DD:EE:FF",
   "ipAddress": "192.168.1.101",
   "broadcastAddress": "192.168.1.255",
-  "isOnline": true
+  "isOnline": false
 }
 ```
+
+**Response (204 No Content)**
 
 **cURL Example:**
 ```bash
 curl -X POST http://localhost:5000/api/v1/pc-devices/1/set \
   -H "Content-Type: application/json" \
   -d '{
+    "id": 1,
     "name": "Updated Name",
     "macAddress": "AA:BB:CC:DD:EE:FF",
     "ipAddress": "192.168.1.101",
-    "broadcastAddress": "192.168.1.255"
+    "broadcastAddress": "192.168.1.255",
+    "isOnline": false
   }'
 ```
 
@@ -261,7 +254,7 @@ Sends a magic packet to wake the specified device.
 **Response (200 OK):**
 ```json
 {
-  "message": "Wake-on-LAN packet sent."
+  "message": "Wake-on-LAN packet sent to Gaming PC"
 }
 ```
 
@@ -304,9 +297,9 @@ All error responses follow [RFC 7807 Problem Details](https://tools.ietf.org/htm
 ```
 
 ### Common Status Codes
-- `200 OK`: Successful GET, POST (wake), PUT
+- `200 OK`: Successful GET, POST (wake)
 - `201 Created`: Successful POST (create device)
-- `204 No Content`: Successful DELETE
+- `204 No Content`: Successful POST (set, delete)
 - `400 Bad Request`: Invalid input (bad MAC format, validation error)
 - `404 Not Found`: Device not found
 - `500 Internal Server Error`: Server error (check logs)
@@ -389,7 +382,7 @@ The API includes CORS headers for cross-origin requests:
 
 ```http
 Access-Control-Allow-Origin: <Frontend URL from config>
-Access-Control-Allow-Methods: GET, POST, PUT, DELETE
+Access-Control-Allow-Methods: GET, POST
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Credentials: true
 ```

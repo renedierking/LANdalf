@@ -144,6 +144,8 @@
         var result = await LANdalfApiService.DeletePcDeviceAsync(item.Id, CancellationToken);
         if (result.IsSuccess) {
             await LoadData();
+        } else {
+            await DialogService.ShowMessageBox("Error", result.Error!.Message);
         }
     }
 
