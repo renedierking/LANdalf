@@ -1,9 +1,11 @@
 @page "/"
 @namespace LANdalf.UI.Pages
 @using LANdalf.UI.ApiClient
+@using LANdalf.UI.Services
 @using System.Threading.Tasks
 @inject LANdalfApiService LANdalfApiService
 @inject IDialogService DialogService
+@inject IDeviceValidationService ValidationService
 
 <PageTitle>LANdalf</PageTitle>
 
@@ -17,8 +19,7 @@
                  ReadOnly="false"
                  Bordered="true"
                  EditMode="DataGridEditMode.Form"
-                 StartedEditingItem="@(async (PcDeviceDTO dto) => await StartedEditingItem(dto))"
-                 CanceledEditingItem="@(async (PcDeviceDTO dto) => await CanceledEditingItem())"
+                 EditDialogOptions="new DialogOptions { BackdropClick=false, CloseOnEscapeKey=true }"
                  CommittedItemChanges="@(async (PcDeviceDTO dto) => await CommittedItemChanges(dto))"
                  EditTrigger="DataGridEditTrigger.Manual">
         <ToolBarContent>
@@ -31,23 +32,61 @@
             </MudButtonGroup>
         </ToolBarContent>
         <Columns>
-            <PropertyColumn Property="x => x.Name" Title="Name" />
-            <PropertyColumn Property="x => x.MacAddress" Title="MAC Address" />
+            <PropertyColumn Property="x => x.Name" Title="Name">
+                <EditTemplate>
+                    <MudTextField @bind-Value="context.Item.Name"
+                                  Label="Name"
+                                  Required="true"
+                                  RequiredError="Name is required"
+                                  MaxLength="64"
+                                  Counter="64"
+                                  Immediate="true"
+                                  Validation="@(new Func<string?, string?>(ValidationService.ValidateName))"
+                                  Variant="Variant.Outlined" />
+                </EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="x => x.MacAddress" Title="MAC Address">
+                <EditTemplate>
+                    <MudTextField @bind-Value="context.Item.MacAddress"
+                                  Label="MAC Address"
+                                  Required="true"
+                                  RequiredError="MAC Address is required"
+                                  Immediate="true"
+                                  Validation="@(new Func<string?, string?>(ValidationService.ValidateMacAddress))"
+                                  Variant="Variant.Outlined"
+                                  HelperText="Format: XX:XX:XX:XX:XX:XX, XX-XX-XX-XX-XX-XX, or XXXXXXXXXXXX" />
+                </EditTemplate>
+            </PropertyColumn>
+            @*<PropertyColumn Property="x => x.IpAddress" Title="IP Address">
+                <EditTemplate>
+                    <MudTextField @bind-Value="context.Item.IpAddress"
+                                  Label="IP Address (optional)"
+                                  Immediate="true"
+                                  Validation="@(new Func<string, string?>(ValidationService.ValidateIpAddress))"
+                                  Variant="Variant.Outlined" />
+                </EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="x => x.BroadcastAddress" Title="Broadcast Address">
+                <EditTemplate>
+                    <MudTextField @bind-Value="context.Item.BroadcastAddress"
+                                  Label="Broadcast Address (optional)"
+                                  Immediate="true"
+                                  Validation="@(new Func<string, string?>(ValidationService.ValidateIpAddress))"
+                                  Variant="Variant.Outlined" />
+                </EditTemplate>
+            </PropertyColumn>*@
             <TemplateColumn>
                 <CellTemplate>
-                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
-                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" OnClick="@(() => DeleteDeviceAsync(context.Item))" />
+                    <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary"
+                               OnClick="@(async () => await WakePcDevice(context.Item))">
+                        Start
+                    </MudButton>
                 </CellTemplate>
-                @* <EditTemplate>
-                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
-                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" OnClick="@(() => DeleteDeviceAsync(context.Item))" />
-                </EditTemplate> *@
             </TemplateColumn>
             <TemplateColumn>
                 <CellTemplate>
-                    <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary">
-                        Start
-                    </MudButton>
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" OnClick="@(() => DeleteDeviceAsync(context.Item))" />
                 </CellTemplate>
             </TemplateColumn>
         </Columns>
@@ -62,6 +101,7 @@
 }
 
 @code {
+
     private IEnumerable<PcDeviceDTO> devices = new List<PcDeviceDTO>();
     private MudDataGrid<PcDeviceDTO> _grid = default!;
     private bool IsLoading { get; set; }
@@ -76,7 +116,7 @@
             IsLoading = true;
             var result = await LANdalfApiService.GetAllPcDevicesAsync(CancellationToken);
             if (result.IsError) {
-                // Error anzeigen
+                await DialogService.ShowMessageBox("Error", result.Error!.Message);
             } else {
                 devices = result.Value!;
             }
@@ -91,19 +131,22 @@
     }
 
     private async Task DeleteDeviceAsync(PcDeviceDTO item) {
+        var msgResult = await DialogService.ShowMessageBox(
+            title: "Delete Device",
+            message: $"Do you really want to delete the device '{item.Name}'?",
+            yesText: "Delete",
+            noText: "Cancel"
+        );
+        if (msgResult is not true) {
+            return;
+        }
+
         var result = await LANdalfApiService.DeletePcDeviceAsync(item.Id, CancellationToken);
         if (result.IsSuccess) {
             await LoadData();
+        } else {
+            await DialogService.ShowMessageBox("Error", result.Error!.Message);
         }
-    }
-
-    private async Task StartedEditingItem(PcDeviceDTO item) {
-
-    }
-
-    private async Task CanceledEditingItem() {
-        // update code for backing data here if needed
-        await LoadData();
     }
 
     private async Task CommittedItemChanges(PcDeviceDTO item) {
@@ -118,7 +161,6 @@
             if (resultAdd.IsSuccess) {
                 await LoadData();
             } else {
-                // Fehler anzeigen
                 await DialogService.ShowMessageBox("Error", resultAdd.Error!.Message);
             }
             return;
@@ -130,5 +172,12 @@
         } else {
             await DialogService.ShowMessageBox("Error", result.Error!.Message);
         }
+    }
+
+    private async Task WakePcDevice(PcDeviceDTO item) {
+        var result = await LANdalfApiService.WakePcDeviceAsync(item.Id, CancellationToken);
+        if (result.IsError) {
+            await DialogService.ShowMessageBox("Error", result.Error!.Message);
+        }        
     }
 }

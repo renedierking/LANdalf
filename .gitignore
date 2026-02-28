@@ -417,4 +417,6 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
+/api-data
 /src/API/LANdalf_Data
+/logs

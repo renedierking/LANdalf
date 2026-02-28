@@ -12,17 +12,25 @@ RUN dotnet publish "./UI.csproj" -c Release -o /app/publish
 
 # Runtime stage - nginx
 FROM nginx:alpine AS runtime
-WORKDIR /etc/nginx/html
+
+# Install gettext for envsubst support
+RUN apk add --no-cache gettext
+
+WORKDIR /usr/share/nginx/html
 
 # Copy published Blazor WASM files
 COPY --from=build /app/publish/wwwroot .
-#COPY --from=build /app/publish/ .
 
-# Copy nginx configuration (nginx.conf is at the build context root)
-COPY nginx.conf /etc/nginx/nginx.conf
+# Copy nginx config as template (envsubst replaces ${NGINX_PORT} at startup)
+COPY nginx.conf /etc/nginx/nginx.conf.template
 
-# Stelle sicher, dass nginx Zugriff hat
+# Copy entrypoint script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 RUN chown -R nginx:nginx /usr/share/nginx/html || true
 
+ENV NGINX_PORT=80
+
 EXPOSE 80
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/docker-entrypoint.sh"]

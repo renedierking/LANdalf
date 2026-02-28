@@ -21,11 +21,12 @@ namespace LANdalf.UI {
                 client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
             });
 
-            // Standard HttpClient (so: @inject HttpClient Http) nutzt die API
+            // Standard HttpClient (so: @inject HttpClient Http) uses the API
             builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("LANdalf.Api"));
             builder.Services.AddScoped(sp => new LANdalfApiClient(sp.GetRequiredService<HttpClient>()));
 
             builder.Services.AddScoped<LANdalfApiService>();
+            builder.Services.AddScoped<IDeviceValidationService, DeviceValidationService>();
 
             await builder.Build().RunAsync();
         }

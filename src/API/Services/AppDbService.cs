@@ -38,8 +38,9 @@ namespace API.Services {
 
         public async Task<bool> DeletePcDeviceAsync(int id, CancellationToken cancellationToken = default) {
             var device = await GetPcDeviceByIdAsync(id, cancellationToken);
-            if (device == null)
+            if (device == null) {
                 return false;
+            }
 
             _dbContext.PcDevices.Remove(device);
             await SaveChangesAsync(cancellationToken);

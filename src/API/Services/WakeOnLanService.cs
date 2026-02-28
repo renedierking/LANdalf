@@ -1,14 +1,20 @@
-﻿using System.Net;
+﻿using Microsoft.Extensions.Logging;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
 namespace API.Services {
     public class WakeOnLanService {
+        private readonly ILogger<WakeOnLanService> _logger;
 
         private const int WAKE_PORT_7 = 7;
         private const int WAKE_PORT_9 = 9;
 
-        public async Task Wake(
+        public WakeOnLanService(ILogger<WakeOnLanService> logger) {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        public virtual async Task Wake(
             PhysicalAddress mac,
             IPAddress? broadcast,
             CancellationToken cancellationToken = default) {
@@ -37,26 +43,27 @@ namespace API.Services {
             }
         }
 
-        private static async Task SendAsync(byte[] packet, int port, UdpClient client, IPAddress target, CancellationToken cancellationToken) {
+        private async Task SendAsync(byte[] packet, int port, UdpClient client, IPAddress target, CancellationToken cancellationToken) {
             for (int i = 0; i < 3; i++) {
                 cancellationToken.ThrowIfCancellationRequested();
                 IPEndPoint endPoint = new IPEndPoint(target, port);
                 await client.SendAsync(packet, endPoint, cancellationToken);
+                _logger.LogDebug("Sent magic packet to {Target}:{Port} (attempt {Attempt}/3)", target, port, i + 1);
                 await Task.Delay(30, cancellationToken);
             }
         }
 
-        private static IEnumerable<IPAddress> GetTargets(IPAddress? explicitBroadcast) {
+        private IEnumerable<IPAddress> GetTargets(IPAddress? explicitBroadcast) {
             var results = new List<IPAddress>();
 
             if (explicitBroadcast != null) {
                 results.Add(explicitBroadcast);
             } else {
-                // Falls der Container Host-Interfaces sehen kann (z.B. --network host), liefert diese Methode Host-Broadcasts
+                // If the container can see host interfaces (e.g. --network host), this method provides host broadcasts
                 results.AddRange(GetAllBroadcastAddresses());
             }
 
-            // Zusätzliche, vom Betreiber konfigurierbare Broadcast-Adressen (z. B. WOL_BROADCASTS="192.168.1.255,10.0.0.255")
+            // Additional operator-configurable broadcast addresses (e.g. WOL_BROADCASTS="192.168.1.255,10.0.0.255")
             string? env = Environment.GetEnvironmentVariable("WOL_BROADCASTS");
             if (!string.IsNullOrWhiteSpace(env)) {
                 foreach (string part in env.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) {
@@ -64,11 +71,13 @@ namespace API.Services {
                         if (!results.Any(r => r.Equals(ip))) {
                             results.Add(ip);
                         }
+                    } else {
+                        _logger.LogWarning("Ignoring invalid address in WOL_BROADCASTS: {Address}", part);
                     }
                 }
             }
 
-            // Fallback: globaler Broadcast
+            // Fallback: global broadcast
             if (!results.Any()) {
                 results.Add(IPAddress.Broadcast); // 255.255.255.255
             }
@@ -76,7 +85,7 @@ namespace API.Services {
             return results;
         }
 
-        private static IEnumerable<IPAddress> GetAllBroadcastAddresses() {
+        private IEnumerable<IPAddress> GetAllBroadcastAddresses() {
             NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
             HashSet<string> unique = new HashSet<string>();
             List<IPAddress> results = new List<IPAddress>();

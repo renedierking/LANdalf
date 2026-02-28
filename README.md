@@ -7,12 +7,13 @@
 **A Modern Wake-on-LAN Management Platform**
 
 [![Latest Release](https://img.shields.io/github/v/release/renedierking/LANdalf?include_prereleases&label=Release&color=brightgreen)](https://github.com/renedierking/LANdalf/releases)
+[![Build and Test](https://github.com/renedierking/LANdalf/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/renedierking/LANdalf/actions/workflows/build-and-test.yml)
 [![.NET Version](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![Blazor](https://img.shields.io/badge/Blazor-WebAssembly-512BD4?logo=blazor&logoColor=white)](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Contributing](#-contributing)
+[Features](#-features) • [Quick Start](#-quick-start) • [Docs](#-documentation) • [Contributing](#-contributing)
 
 </div>
 
@@ -20,216 +21,96 @@
 
 ## 📖 About
 
-LANdalf is a sleek, modern web application that brings the power of Wake-on-LAN (WoL) to your fingertips. Built with cutting-edge .NET 10.0 and Blazor WebAssembly, it provides an intuitive interface to manage and remotely wake your network devices from anywhere on your local network.
-
-### Why LANdalf?
-
-- 🎯 **Simple & Intuitive**: Clean, modern UI built with MudBlazor
-- 🚀 **Fast**: Blazor WebAssembly for lightning-fast client-side performance
-- 🐳 **Docker Ready**: One-command deployment with Docker Compose
-- 🔒 **Secure**: Built on modern .NET 10.0 with best practices
-- 📱 **Responsive**: Works seamlessly on desktop and mobile devices
-- 🎨 **Beautiful**: State-of-the-art Material Design interface
+LANdalf is a web-based Wake-on-LAN management platform built with .NET 10.0, Blazor WebAssembly, and MudBlazor. It lets you manage network devices and wake them remotely — deployable in seconds via Docker Compose.
 
 ## ✨ Features
 
-- **Device Management**: Add, edit, and organize your network devices
-- **Wake-on-LAN**: Send magic packets to wake sleeping devices remotely
-- **Status Monitoring**: Real-time device online/offline status
-- **MAC Address Management**: Store and manage device MAC addresses
-- **IP & Broadcast Configuration**: Flexible network configuration support
-- **RESTful API**: Full-featured API with OpenAPI/Swagger documentation
-- **Persistent Storage**: SQLite database for reliable data storage
-- **Cross-Platform**: Runs on Windows, Linux, and macOS
+- **Device Management** — Add, edit, and organize network devices with MAC address storage
+- **Wake-on-LAN** — Send magic packets to wake sleeping devices remotely
+- **RESTful API** — Versioned API with OpenAPI documentation ([API Guide](docs/API_USAGE.md))
+- **Docker Ready** — One-command deployment, cross-platform (Windows, Linux, macOS)
+
+## Interface Preview
+
+![LANdalf Home Interface](docs/images/home-interface.png)
 
 ## 🚀 Quick Start
 
-### Using Docker Compose (Recommended)
+Create a `docker-compose.yaml`:
 
-The fastest way to get LANdalf up and running:
+<!-- BEGIN_DOCKER_COMPOSE -->
+```yaml
+services:
+  api:
+    image: ghcr.io/renedierking/landalf-api:latest
+    container_name: landalf-api
+    network_mode: host
+    environment:
+      - ASPNETCORE_URLS=http://+:5000
+      - Cors__FrontendUrl=http://localhost # Adjust if NGINX_PORT != 80, e.g. http://localhost:8080
+      - Serilog__MinimumLevel__Default=Information
+      - Serilog__MinimumLevel__Override__Microsoft.AspNetCore=Warning
+      - Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=Warning
+    volumes:
+      - ./api-data:/app/LANdalf_Data:rw
+      - ./logs:/app/logs:rw
+    restart: unless-stopped
+
+  ui:
+    image: ghcr.io/renedierking/landalf-ui:latest
+    container_name: landalf-ui
+    network_mode: host
+    environment:
+      - NGINX_PORT=80 # Change to any free port, then update Cors__FrontendUrl above
+    depends_on:
+      - api
+    restart: unless-stopped
+```
+<!-- END_DOCKER_COMPOSE -->
 
 ```bash
-# Clone the repository
-git clone https://github.com/renedierking/LANdalf.git
-cd LANdalf
-
-# Start the application
 docker compose up -d
-
-# Access the application
-# UI: http://localhost:8080
-# API: http://localhost:5000
 ```
 
-That's it! 🎉 LANdalf is now running on your network.
+- **UI**: http://localhost
+- **API**: http://localhost:5000
+- **API Docs**: http://localhost:5000/scalar/v1
 
-### Manual Setup
+> **Custom UI port:** Set `NGINX_PORT` (e.g. `8080`) and update `Cors__FrontendUrl` accordingly (e.g. `http://localhost:8080`).
 
-**Prerequisites:**
-- [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) or later
-- A modern web browser (Chrome, Firefox, Edge, Safari)
-
-**Steps:**
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/renedierking/LANdalf.git
-   cd LANdalf
-   ```
-
-2. **Run the API**
-   ```bash
-   cd src/API
-   dotnet run
-   ```
-   The API will be available at `http://localhost:5000`
-
-3. **Run the UI** (in a new terminal)
-   ```bash
-   cd src/UI
-   dotnet run
-   ```
-   The UI will be available at `http://localhost:7052`
+> For manual setup, platform-specific instructions, and troubleshooting, see the **[Installation Guide](docs/INSTALLATION.md)**.
 
 ## 📚 Documentation
 
-### Adding a Device
-
-1. Navigate to the LANdalf web interface
-2. Click the **"Add Device"** button
-3. Enter the device information:
-   - **Name**: A friendly name for your device
-   - **MAC Address**: The physical address of the network adapter
-   - **IP Address**: (Optional) The device's IP address
-   - **Broadcast Address**: The network broadcast address
-4. Click **"Save"**
-
-### Waking a Device
-
-Simply click the **"Wake"** button next to any device in your list. LANdalf will send a magic packet to wake the device.
-
-> **Note**: Wake-on-LAN must be enabled in your device's BIOS/UEFI and network adapter settings.
-
-### API Documentation
-
-The API includes comprehensive OpenAPI (Swagger) documentation. When running the API, navigate to:
-
-```
-http://localhost:5000/scalar/v1
-```
-
-## 🏗️ Architecture
-
-LANdalf follows a modern, decoupled architecture:
-
-```
-┌─────────────────────────────────────────┐
-│         Blazor WebAssembly UI          │
-│        (MudBlazor Components)          │
-└──────────────┬──────────────────────────┘
-               │ HTTP/REST
-               │
-┌──────────────▼──────────────────────────┐
-│         ASP.NET Core API               │
-│      (Versioned REST Endpoints)        │
-└──────────────┬──────────────────────────┘
-               │
-    ┌──────────┼──────────┐
-    │                     │
-┌───▼────┐          ┌────▼─────┐
-│ SQLite │          │   WoL    │
-│   DB   │          │ Service  │
-└────────┘          └──────────┘
-```
-
-### Technology Stack
-
-**Frontend:**
-- Blazor WebAssembly (.NET 10.0)
-- MudBlazor UI Component Library
-- Progressive Web App (PWA) Support
-
-**Backend:**
-- ASP.NET Core (.NET 10.0)
-- Entity Framework Core
-- SQLite Database
-- API Versioning
-- Scalar API Documentation
-
-**DevOps:**
-- Docker & Docker Compose
-- nginx (for UI hosting in production)
-- Multi-stage Docker builds
+| Guide | Description |
+|-------|-------------|
+| 🚀 **[Installation & Setup](docs/INSTALLATION.md)** | Docker & manual installation, configuration, troubleshooting |
+| 🔧 **[Wake-on-LAN Setup](docs/WOL_SETUP.md)** | Device configuration, network setup, testing WoL |
+| 📡 **[API Usage Guide](docs/API_USAGE.md)** | API reference, examples, error handling |
+| 🏗️ **[Architecture](ARCHITECTURE.md)** | System design, tech stack, data flow, database schema |
+| 🗺️ **[Roadmap](ROADMAP.md)** | Planned features and enhancements |
 
 ## 🛠️ Development
 
-### Prerequisites
-
-- .NET 10.0 SDK
-- Docker & Docker Compose (for containerized development)
-- Visual Studio 2022+ or VS Code with C# extension
-- Git
-
-### Building from Source
-
 ```bash
-# Build the entire solution
-dotnet build LANdalf.slnx
-
-# Run tests
-dotnet test
-
-# Build Docker images
-docker compose build
+dotnet build LANdalf.slnx   # Build
+dotnet test                  # Test
+docker compose build         # Docker images
 ```
 
-### Project Structure
-
-```
-LANdalf/
-├── src/
-│   ├── API/              # ASP.NET Core Web API
-│   │   ├── Controllers/  # API endpoints
-│   │   ├── Models/       # Data models
-│   │   ├── Services/     # Business logic
-│   │   └── Data/         # Database context
-│   └── UI/               # Blazor WebAssembly app
-│       ├── Pages/        # Razor pages
-│       ├── Components/   # Reusable components
-│       └── Services/     # Client services
-├── test/                 # Unit and integration tests
-└── docker-compose.yaml   # Docker orchestration
-```
+See **[CONTRIBUTING.md](CONTRIBUTING.md)** for prerequisites, project structure, and development guidelines.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Here's how you can help:
-
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add some amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
-
-Please ensure your PR:
-- Follows the existing code style
-- Includes tests for new functionality
-- Updates documentation as needed
+Contributions are welcome! Please read the **[Contributing Guide](CONTRIBUTING.md)** for the workflow and guidelines.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Built with [.NET](https://dotnet.microsoft.com/) and [Blazor](https://blazor.net/)
-- UI powered by [MudBlazor](https://mudblazor.com/)
-- Inspired by the need for a modern, web-based Wake-on-LAN solution
+MIT — see [LICENSE](LICENSE) for details.
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/renedierking/LANdalf/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/renedierking/LANdalf/discussions)
+- [GitHub Issues](https://github.com/renedierking/LANdalf/issues) · [GitHub Discussions](https://github.com/renedierking/LANdalf/discussions)
 
 ---
 

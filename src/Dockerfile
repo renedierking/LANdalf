@@ -20,7 +20,6 @@ RUN dotnet publish "./API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:Use
 
 # Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
-USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
@@ -28,7 +27,8 @@ EXPOSE 8081
 # Copy Backend
 COPY --from=build-api /app/publish .
 
-# Copy Frontend zu wwwroot (wird vom Backend served)
+# Copy Frontend to wwwroot (served by the Backend)
 COPY --from=build-ui /app/publish/wwwroot ./wwwroot
 
+USER $APP_UID
 ENTRYPOINT ["dotnet", "API.dll"]

@@ -1,11 +1,14 @@
 services:
   api:
-    image: ghcr.io/renedierking/landalf-api:latest
-    container_name: landalf-api
+    build:
+      context: ../../src/API
+      dockerfile: Dockerfile
+    image: landalf-api:latest
+    container_name: api
     network_mode: host
     environment:
       - ASPNETCORE_URLS=http://+:5000
-      - Cors__FrontendUrl=http://localhost # Adjust if NGINX_PORT != 80, e.g. http://localhost:8080
+      - Cors__FrontendUrl=http://localhost:8080
       - Serilog__MinimumLevel__Default=Information
       - Serilog__MinimumLevel__Override__Microsoft.AspNetCore=Warning
       - Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=Warning
@@ -15,14 +18,16 @@ services:
     restart: unless-stopped
 
   ui:
-    image: ghcr.io/renedierking/landalf-ui:latest
-    container_name: landalf-ui
+    build:
+      context: ../../src/UI
+      dockerfile: Dockerfile
+    image: landalf-ui:latest
+    container_name: ui
     network_mode: host
-    environment:
-      - NGINX_PORT=80 # Change to any free port, then update Cors__FrontendUrl above
     depends_on:
       - api
     restart: unless-stopped
+
 volumes:
   api-data:
   api-logs:

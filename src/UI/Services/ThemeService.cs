@@ -29,7 +29,7 @@ public class ThemeService {
             InitializeTheme();
             OnThemeChanged?.Invoke();
         } catch {
-            // Fallback bei localStorage-Fehler
+            // Fallback on localStorage error
             isDarkMode = false;
             InitializeTheme();
         }

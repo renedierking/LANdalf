@@ -11,10 +11,12 @@ namespace API.Handler {
     public class PcDeviceHandler {
         private readonly IAppDbService _appDbService;
         private readonly WakeOnLanService _wolService;
+        private readonly ILogger<PcDeviceHandler> _logger;
 
-        public PcDeviceHandler(IAppDbService appDbService, WakeOnLanService wolService) {
+        public PcDeviceHandler(IAppDbService appDbService, WakeOnLanService wolService, ILogger<PcDeviceHandler> logger) {
             _appDbService = appDbService ?? throw new ArgumentNullException(nameof(appDbService));
             _wolService = wolService ?? throw new ArgumentNullException(nameof(wolService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task<IResult> GetAllDevices(CancellationToken cancellationToken) {
@@ -101,7 +103,8 @@ namespace API.Handler {
             if (pc == null) {
                 return CreateNotFoundResult($"PC device with ID {id} not found");
             }
-            await _wolService.Wake(pc.MacAddress, pc.BroadcastAddress);
+            await _wolService.Wake(pc.MacAddress, pc.BroadcastAddress, cancellationToken);
+            _logger.LogDebug("Wake-on-LAN packet sent to device {DeviceId} ({DeviceName}, MAC: {MacAddress})", id, pc.Name, pc.MacAddress);
             return Results.Ok(new { message = $"Wake-on-LAN packet sent to {pc.Name}" });
         }
 
