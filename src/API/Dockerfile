@@ -25,10 +25,13 @@ RUN dotnet publish "API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAp
 
 FROM base AS final
 WORKDIR /app
-RUN mkdir -p /app/LANdalf_Data \
+RUN apt-get update && apt-get install -y --no-install-recommends gosu \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /app/LANdalf_Data /app/logs \
     && addgroup --system appgroup \
     && adduser --system --ingroup appgroup appuser \
     && chown -R appuser:appgroup /app
 COPY --from=publish /app/publish .
-USER appuser
-ENTRYPOINT ["dotnet", "API.dll"]
+COPY ./docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["docker-entrypoint.sh", "dotnet", "API.dll"]
