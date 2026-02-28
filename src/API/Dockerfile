@@ -25,12 +25,10 @@ RUN dotnet publish "API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAp
 
 FROM base AS final
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends gosu && rm -rf /var/lib/apt/lists/* \
-    && mkdir -p /app/LANdalf_Data /app/logs \
-    && addgroup --system appgroup \
-    && adduser --system --ingroup appgroup appuser \
+RUN mkdir -p /app/LANdalf_Data /app/logs \
+    && groupadd --system appgroup \
+    && useradd --system --no-create-home -g appgroup appuser \
     && chown -R appuser:appgroup /app
 COPY --from=publish /app/publish .
-COPY --chmod=755 entrypoint.sh /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["dotnet", "API.dll"]
+USER appuser
+ENTRYPOINT ["dotnet", "API.dll"]
