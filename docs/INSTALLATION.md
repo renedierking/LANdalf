@@ -19,9 +19,9 @@
 
 **What this means:**
 - The application uses your host machine's network directly
-- No port mapping needed (ports are used directly on the host)
+- No port mapping needed (ports 5000 and 8080 are used directly)
 - WoL magic packets are properly broadcast on your network
-- Ports 5000 (API) and 80 (UI, configurable via `NGINX_PORT`) must be available on your host
+- Ports 5000 and 8080 must be available on your host
 
 **Platform Support:**
 - **Linux**: ✅ Full support - host network mode works natively
@@ -61,16 +61,16 @@ docker compose ps
 ```
 
 ### Access the Application
-- **UI**: http://localhost (default port 80, configurable via `NGINX_PORT`)
+- **UI**: http://localhost:8080
 - **API**: http://localhost:5000
 - **API Docs**: http://localhost:5000/scalar/v1
 
 ### Port Requirements
 LANdalf requires the following ports on your host:
-- **5000/TCP** — API server (HTTP)
-- **80/TCP** — UI server (HTTP, configurable via `NGINX_PORT` environment variable)
+- **5000/TCP** - API server (HTTP)
+- **8080/TCP** - UI server (HTTP)
 
-If port 80 is already in use, set `NGINX_PORT` to another port (e.g. `8080`) in `docker-compose.yaml` and update `Cors__FrontendUrl` to match.
+If these ports are already in use, you'll need to use manual setup instead.
 
 ### Stopping & Cleanup
 ```bash
@@ -190,15 +190,15 @@ environment:
 Error: bind: address already in use
 ```
 
-**Solution**: Change the UI port via the `NGINX_PORT` environment variable in `docker-compose.yaml`, and update `Cors__FrontendUrl` to match:
+**Solution**: Change ports in `docker-compose.yaml`
 ```yaml
 services:
-  api:
-    environment:
-      - Cors__FrontendUrl=http://localhost:8080
-  ui:
-    environment:
-      - NGINX_PORT=8080
+  landalf-ui:
+    ports:
+      - "8081:80"  # Changed from 8080
+  landalf-api:
+    ports:
+      - "5001:8080"  # Changed from 5000
 ```
 
 #### Problem: Containers Won't Start
