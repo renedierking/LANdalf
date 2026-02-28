@@ -10,11 +10,11 @@ ENV DOTNET_EnableWriteXorExecute=0
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-# Zuerst nur die Projektdatei kopieren und restore ausführen (Cache-freundlich)
+# First copy only the project file and run restore (cache-friendly)
 COPY ["API.csproj", "./"]
 RUN dotnet restore "API.csproj"
 
-# Dann den Rest des Projekts kopieren (inkl. Program.cs usw.)
+# Then copy the rest of the project (including Program.cs etc.)
 COPY . .
 
 # Build
