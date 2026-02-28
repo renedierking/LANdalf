@@ -1,0 +1,5 @@
+bin/
+obj/
+LANdalf_Data/
+logs/
+*.user

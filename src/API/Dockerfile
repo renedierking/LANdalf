@@ -26,10 +26,26 @@ RUN dotnet publish "API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAp
 
 FROM base AS final
 WORKDIR /app
-RUN mkdir -p /app/LANdalf_Data /app/logs \
-    && groupadd --system appgroup \
-    && useradd --system --no-create-home -g appgroup appuser \
-    && chown -R appuser:appgroup /app
+
+# Install gosu for privilege de-escalation in the entrypoint
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gosu \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create system user/group
+RUN groupadd --system appgroup \
+    && useradd --system --no-create-home -g appgroup appuser
+
+# Copy published application (as root – entrypoint handles privilege drop)
 COPY --from=publish /app/publish .
-USER appuser
-ENTRYPOINT ["dotnet", "API.dll"]
+
+# Prepare writable directories and hand them to appuser
+RUN mkdir -p /app/LANdalf_Data /app/logs \
+    && chown -R appuser:appgroup /app/LANdalf_Data /app/logs
+
+# Copy entrypoint that chowns volume mounts and drops to appuser via gosu
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["dotnet", "API.dll"]
