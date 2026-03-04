@@ -1,6 +1,7 @@
-﻿using API.Data;
+using API.Data;
 using API.DTOs;
 using API.Handler;
+using API.MinimalApi;
 using API.Services;
 using Asp.Versioning;
 using LANdalf.API.DTOs;
@@ -44,6 +45,7 @@ namespace API {
             builder.Services.AddScoped<IAppDbService, AppDbService>();
             builder.Services.AddScoped<WakeOnLanService>();
             builder.Services.AddScoped<PcDeviceHandler>();
+            builder.Services.AddMinimalApiStrategies();
 
             builder.Services.AddApiVersioning(options => {
                 options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -143,64 +145,8 @@ namespace API {
             var v1 = versionedApi.MapGroup("/api/v{version:apiVersion}");
             v1.HasApiVersion(1.0);
 
-            v1.MapGet("/pc-devices/", (PcDeviceHandler handler, CancellationToken ct) => handler.GetAllDevices(ct))
-                .AddOpenApiOperationTransformer((operation, context, ct) => {
-                    operation.OperationId = "GetAllPcDevices";
-                    operation.Summary = "Get all PcDevices.";
-                    operation.Description = "Returns an array of PcDevices.";
-                    return Task.CompletedTask;
-                }).Produces<IReadOnlyList<PcDeviceDTO>>();
-
-            v1.MapGet("/pc-devices/{id}", (PcDeviceHandler handler, int id, CancellationToken ct) => handler.GetDeviceById(id, ct))
-                .AddOpenApiOperationTransformer((operation, context, ct) => {
-                    operation.OperationId = "GetPcDeviceById";
-                    operation.Summary = "Get a specific PcDevices.";
-                    operation.Description = "Returns a PcDevice.";
-                    return Task.CompletedTask;
-                }).Produces<PcDeviceDTO>()
-                .ProducesProblem((int)HttpStatusCode.NotFound);
-
-            v1.MapPost("/pc-devices/add", (PcDeviceHandler handler, PcCreateDto dto, CancellationToken ct) => handler.AddDevice(dto, ct))
-                .AddOpenApiOperationTransformer((operation, context, ct) => {
-                    operation.OperationId = "AddPcDevice";
-                    operation.Summary = "Add a new PcDevice.";
-                    operation.Description = "Returns a Created-Result.";
-                    return Task.CompletedTask;
-                })
-                .Produces((int)HttpStatusCode.Created)
-                .ProducesProblem((int)HttpStatusCode.BadRequest);
-
-            v1.MapPost("/pc-devices/{id}/set", (PcDeviceHandler handler, int id, PcDeviceDTO dto, CancellationToken ct) => handler.SetDevice(id, dto, ct))
-                .AddOpenApiOperationTransformer((operation, context, ct) => {
-                    operation.OperationId = "SetPcDevice";
-                    operation.Summary = "Updates an existing PcDevice.";
-                    operation.Description = "Returns a NoContent-Result.";
-                    return Task.CompletedTask;
-                })
-                .Produces((int)HttpStatusCode.NoContent)
-                .ProducesProblem((int)HttpStatusCode.NotFound)
-                .ProducesProblem((int)HttpStatusCode.BadRequest);
-
-
-            v1.MapPost("/pc-devices/{id}/delete", (PcDeviceHandler handler, int id, CancellationToken ct) => handler.DeleteDevice(id, ct))
-                .AddOpenApiOperationTransformer((operation, context, ct) => {
-                    operation.OperationId = "DeletePcDevice";
-                    operation.Summary = "Deletes an existing PcDevice.";
-                    operation.Description = "Returns a NoContent-Result.";
-                    return Task.CompletedTask;
-                })
-                .Produces((int)HttpStatusCode.NoContent)
-                .ProducesProblem((int)HttpStatusCode.NotFound);
-
-            v1.MapPost("/pc-devices/{id}/wake", (PcDeviceHandler handler, int id, CancellationToken ct) => handler.WakeDevice(id, ct))
-                .AddOpenApiOperationTransformer((operation, context, ct) => {
-                    operation.OperationId = "WakePcDevice";
-                    operation.Summary = "Wakes an PcDevice.";
-                    operation.Description = "Returns a Ok-Result.";
-                    return Task.CompletedTask;
-                })
-                .Produces((int)HttpStatusCode.OK)
-                .ProducesProblem((int)HttpStatusCode.NotFound);
+            var minimalApiStrategies = app.Services.GetRequiredService<IEnumerable<IMinimalApiStrategy>>();
+            v1.MapMinimalApiStrategies(minimalApiStrategies);
 
             Log.Information("LANdalf API started successfully");
             app.Run();
