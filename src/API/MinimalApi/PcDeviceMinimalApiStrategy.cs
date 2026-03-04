@@ -17,7 +17,7 @@ namespace API.MinimalApi {
             group.MapGet("/pc-devices/{id}", (PcDeviceHandler handler, int id, CancellationToken ct) => handler.GetDeviceById(id, ct))
                 .AddOpenApiOperationTransformer((operation, context, ct) => {
                     operation.OperationId = "GetPcDeviceById";
-                    operation.Summary = "Get a specific PcDevices.";
+                    operation.Summary = "Get a specific PcDevice.";
                     operation.Description = "Returns a PcDevice.";
                     return Task.CompletedTask;
                 }).Produces<PcDeviceDTO>()
@@ -57,7 +57,7 @@ namespace API.MinimalApi {
             group.MapPost("/pc-devices/{id}/wake", (PcDeviceHandler handler, int id, CancellationToken ct) => handler.WakeDevice(id, ct))
                 .AddOpenApiOperationTransformer((operation, context, ct) => {
                     operation.OperationId = "WakePcDevice";
-                    operation.Summary = "Wakes an PcDevice.";
+                    operation.Summary = "Wakes a PcDevice.";
                     operation.Description = "Returns a Ok-Result.";
                     return Task.CompletedTask;
                 })
