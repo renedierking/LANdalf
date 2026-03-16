@@ -116,12 +116,22 @@
             IsLoading = true;
             var result = await LANdalfApiService.GetAllPcDevicesAsync(CancellationToken);
             if (result.IsError) {
-                await DialogService.ShowMessageBox("Error", result.Error!.Message);
+                await DialogService.ShowMessageBoxAsync("Error", result.Error!.Message);
             } else {
                 devices = result.Value!;
             }
         } finally {
             IsLoading = false;
+        }
+    }
+
+    private async Task RefreshData() {
+        var result = await LANdalfApiService.GetAllPcDevicesAsync(CancellationToken);
+        if (result.IsError) {
+            await DialogService.ShowMessageBoxAsync("Error", result.Error!.Message);
+        } else {
+            devices = result.Value!;
+            StateHasChanged();
         }
     }
 
@@ -131,7 +141,7 @@
     }
 
     private async Task DeleteDeviceAsync(PcDeviceDTO item) {
-        var msgResult = await DialogService.ShowMessageBox(
+        var msgResult = await DialogService.ShowMessageBoxAsync(
             title: "Delete Device",
             message: $"Do you really want to delete the device '{item.Name}'?",
             yesText: "Delete",
@@ -143,13 +153,13 @@
 
         var result = await LANdalfApiService.DeletePcDeviceAsync(item.Id, CancellationToken);
         if (result.IsSuccess) {
-            await LoadData();
+            await RefreshData();
         } else {
-            await DialogService.ShowMessageBox("Error", result.Error!.Message);
+            await DialogService.ShowMessageBoxAsync("Error", result.Error!.Message);
         }
     }
 
-    private async Task CommittedItemChanges(PcDeviceDTO item) {
+    private async Task<DataGridEditFormAction> CommittedItemChanges(PcDeviceDTO item) {
         if (item.Id == 0) {
             var createDTO = new PcCreateDto {
                 Name = item.Name,
@@ -159,25 +169,28 @@
             };
             var resultAdd = await LANdalfApiService.AddPcDeviceAsync(createDTO, CancellationToken);
             if (resultAdd.IsSuccess) {
-                await LoadData();
+                await RefreshData();
             } else {
-                await DialogService.ShowMessageBox("Error", resultAdd.Error!.Message);
+                await DialogService.ShowMessageBoxAsync("Error", resultAdd.Error!.Message);
+                return DataGridEditFormAction.KeepOpen;
             }
-            return;
+            return DataGridEditFormAction.Close;
         }
 
         var result = await LANdalfApiService.UpdatePcDevice(item, CancellationToken);
         if (result.IsSuccess) {
-            await LoadData();
+            await RefreshData();
         } else {
-            await DialogService.ShowMessageBox("Error", result.Error!.Message);
+            await DialogService.ShowMessageBoxAsync("Error", result.Error!.Message);
+            return DataGridEditFormAction.KeepOpen;
         }
+        return DataGridEditFormAction.Close;
     }
 
     private async Task WakePcDevice(PcDeviceDTO item) {
         var result = await LANdalfApiService.WakePcDeviceAsync(item.Id, CancellationToken);
         if (result.IsError) {
-            await DialogService.ShowMessageBox("Error", result.Error!.Message);
+            await DialogService.ShowMessageBoxAsync("Error", result.Error!.Message);
         }        
     }
 }
