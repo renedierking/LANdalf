@@ -53,7 +53,7 @@ jobs:
             type=semver,pattern={{major}}
 
       - name: Build and push API image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: src/API
           file: src/API/Dockerfile
@@ -78,7 +78,7 @@ jobs:
             type=semver,pattern={{major}}
 
       - name: Build and push UI image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: src/UI
           file: src/UI/Dockerfile
