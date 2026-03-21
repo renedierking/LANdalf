@@ -42,7 +42,7 @@ jobs:
       # --- API Image ---
       - name: Extract metadata for API image
         id: meta-api
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.API_IMAGE }}
           tags: |
@@ -67,7 +67,7 @@ jobs:
       # --- UI Image ---
       - name: Extract metadata for UI image
         id: meta-ui
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.UI_IMAGE }}
           tags: |
