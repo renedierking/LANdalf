@@ -58,7 +58,7 @@ namespace API.MinimalApi {
                 .AddOpenApiOperationTransformer((operation, context, ct) => {
                     operation.OperationId = "WakePcDevice";
                     operation.Summary = "Wakes a PcDevice.";
-                    operation.Description = "Returns a Ok-Result.";
+                    operation.Description = "Returns an Ok-Result.";
                     return Task.CompletedTask;
                 })
                 .Produces((int)HttpStatusCode.OK)
