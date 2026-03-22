@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Linq;
 using System.Reflection;
 
 namespace API.MinimalApi {
@@ -11,7 +14,7 @@ namespace API.MinimalApi {
                 .Where(type => !type.IsInterface && !type.IsAbstract && typeof(IMinimalApiStrategy).IsAssignableFrom(type));
 
             foreach (var strategyType in strategyTypes) {
-                services.AddSingleton(typeof(IMinimalApiStrategy), strategyType);
+                services.TryAddEnumerable(ServiceDescriptor.Singleton(typeof(IMinimalApiStrategy), strategyType));
             }
 
             return services;

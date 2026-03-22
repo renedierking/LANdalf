@@ -23,6 +23,21 @@ public class MinimalApiStrategyTests {
     }
 
     [Fact]
+    public void AddMinimalApiStrategies_DoesNotRegisterDuplicates_WhenCalledMultipleTimes() {
+        // Arrange
+        var services = new ServiceCollection();
+
+        // Act
+        services.AddMinimalApiStrategies(typeof(PcDeviceMinimalApiStrategy).Assembly);
+        services.AddMinimalApiStrategies(typeof(PcDeviceMinimalApiStrategy).Assembly);
+        using var serviceProvider = services.BuildServiceProvider();
+
+        // Assert
+        var strategies = serviceProvider.GetServices<IMinimalApiStrategy>();
+        strategies.Should().ContainSingle(strategy => strategy.GetType() == typeof(PcDeviceMinimalApiStrategy));
+    }
+
+    [Fact]
     public void MapMinimalApiStrategies_MapsAllProvidedStrategies() {
         // Arrange
         var strategy = new FakeMinimalApiStrategy();
