@@ -105,6 +105,16 @@ dotnet test                  # Test
 docker compose build         # Docker images
 ```
 
+### Minimal API extension pattern
+
+LANdalf uses a strategy pattern for Minimal API endpoint registration:
+
+- Implement `IMinimalApiStrategy` in the API project.
+- Register strategies through `AddMinimalApiStrategies()` (assembly scanning).
+- Strategies are applied in `Program.cs` via `MapMinimalApiStrategies(...)`.
+
+This keeps `Program.cs` focused on composition and makes new endpoint groups plug-in friendly.
+
 See **[CONTRIBUTING.md](CONTRIBUTING.md)** for prerequisites, project structure, and development guidelines.
 
 ## 🤝 Contributing

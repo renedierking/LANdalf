@@ -6,6 +6,12 @@ Complete guide for using LANdalf's REST API.
 
 LANdalf provides a RESTful API for managing devices and sending Wake-on-LAN commands. The API is fully documented with OpenAPI (Swagger) specification.
 
+### Endpoint registration architecture
+
+Minimal API endpoints are composed via strategy classes that implement `IMinimalApiStrategy`.
+`Program.cs` discovers and registers strategies with `AddMinimalApiStrategies()` and maps them with `MapMinimalApiStrategies(...)`.
+To add a new endpoint group, create a new strategy implementation in the API project and include its route mappings there.
+
 ### Quick Links
 - **Base URL**: `http://localhost:5000` (local) or `https://api.yourdomain.com` (production)
 - **API Version**: v1
@@ -459,4 +465,3 @@ await client.WakePcDeviceAsync(1);
 - 🏗️ [Architecture](../ARCHITECTURE.md)
 - 🐛 [Report Issues](https://github.com/renedierking/LANdalf/issues)
 - 💬 [Ask Questions](https://github.com/renedierking/LANdalf/discussions)
-
