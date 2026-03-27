@@ -80,7 +80,7 @@ public class ThemeService {
     private static MudTheme CreateDarkTheme() {
         return new MudTheme {
             PaletteDark = new PaletteDark {
-                Primary = "#bb86fc",
+                Primary = "#4fc3f7",
                 Secondary = "#03dac6",
                 Success = "#33d9b2",
                 Info = "#0288d1",

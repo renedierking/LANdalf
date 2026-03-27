@@ -1,0 +1,62 @@
+@namespace LANdalf.UI.Components
+@using LANdalf.UI.ApiClient
+
+<MudCard Elevation="3" Class="device-card">
+    <MudCardContent>
+        <MudStack Spacing="3">
+            <MudText Typo="Typo.h5">@Device.Name</MudText>
+
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.End">
+                <MudFab Color="@(Device.IsOnline ? Color.Success : Color.Error)"
+                        StartIcon="@Icons.Material.Filled.PowerSettingsNew"
+                        Size="Size.Medium"
+                        OnClick="@(() => OnStartClick.InvokeAsync())"
+                        aria-label="@($"Wake device {Device.Name}")" />
+
+                <MudStack Spacing="1" AlignItems="AlignItems.End">
+                    <MudIconButton Icon="@Icons.Material.Outlined.Edit"
+                                   Size="Size.Small"
+                                   OnClick="@(() => OnEditClick.InvokeAsync())"
+                                   aria-label="@($"Edit device {Device.Name}")" />
+                    <MudIconButton Icon="@Icons.Material.Outlined.Delete"
+                                   Size="Size.Small"
+                                   OnClick="@(() => OnDeleteClick.InvokeAsync())"
+                                   aria-label="@($"Delete device {Device.Name}")" />
+                </MudStack>
+            </MudStack>
+
+            <MudStack Spacing="1">
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    <MudIcon Icon="@Icons.Material.Filled.Cable" Size="Size.Small" Style="vertical-align: middle;" />
+                    MAC: @Device.MacAddress
+                </MudText>
+                @if (!string.IsNullOrWhiteSpace(Device.IpAddress)) {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        <MudIcon Icon="@Icons.Material.Filled.Router" Size="Size.Small" Style="vertical-align: middle;" />
+                        IP: @Device.IpAddress
+                    </MudText>
+                }
+                @if (!string.IsNullOrWhiteSpace(Device.BroadcastAddress)) {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        <MudIcon Icon="@Icons.Material.Filled.CellTower" Size="Size.Small" Style="vertical-align: middle;" />
+                        Broadcast: @Device.BroadcastAddress
+                    </MudText>
+                }
+            </MudStack>
+        </MudStack>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter]
+    public PcDeviceDTO Device { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback OnStartClick { get; set; }
+
+    [Parameter]
+    public EventCallback OnEditClick { get; set; }
+
+    [Parameter]
+    public EventCallback OnDeleteClick { get; set; }
+}

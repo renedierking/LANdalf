@@ -2,98 +2,85 @@
 @namespace LANdalf.UI.Pages
 @using LANdalf.UI.ApiClient
 @using LANdalf.UI.Services
+@using LANdalf.UI.Components
 @using System.Threading.Tasks
 @inject LANdalfApiService LANdalfApiService
 @inject IDialogService DialogService
 @inject IDeviceValidationService ValidationService
+@inject ViewPreferenceService ViewPreferenceService
+@inject IJSRuntime JsRuntime
+@inject ISnackbar Snackbar
+@implements IAsyncDisposable
 
 <PageTitle>LANdalf</PageTitle>
 
 @if (!IsLoading) {
-
-    <MudDataGrid @ref="_grid"
-                 Items="devices"
-                 MultiSelection="false"
-                 Filterable="true"
-                 Dense="true"
-                 ReadOnly="false"
-                 Bordered="true"
-                 EditMode="DataGridEditMode.Form"
-                 EditDialogOptions="new DialogOptions { BackdropClick=false, CloseOnEscapeKey=true }"
-                 CommittedItemChanges="@(async (PcDeviceDTO dto) => await CommittedItemChanges(dto))"
-                 EditTrigger="DataGridEditTrigger.Manual">
-        <ToolBarContent>
+    <MudStack Spacing="3">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
             <MudText Typo="Typo.h6">Devices</MudText>
-            <MudSpacer />
-            <MudButtonGroup Class="ma-0 pa-0" Color="Color.Success" Variant="Variant.Filled">
-                <MudButton OnClick="NewDeviceAsync">
-                    Add New Device
-                </MudButton>
-            </MudButtonGroup>
-        </ToolBarContent>
-        <Columns>
-            <PropertyColumn Property="x => x.Name" Title="Name">
-                <EditTemplate>
-                    <MudTextField @bind-Value="context.Item.Name"
-                                  Label="Name"
-                                  Required="true"
-                                  RequiredError="Name is required"
-                                  MaxLength="64"
-                                  Counter="64"
-                                  Immediate="true"
-                                  Validation="@(new Func<string?, string?>(ValidationService.ValidateName))"
-                                  Variant="Variant.Outlined" />
-                </EditTemplate>
-            </PropertyColumn>
-            <PropertyColumn Property="x => x.MacAddress" Title="MAC Address">
-                <EditTemplate>
-                    <MudTextField @bind-Value="context.Item.MacAddress"
-                                  Label="MAC Address"
-                                  Required="true"
-                                  RequiredError="MAC Address is required"
-                                  Immediate="true"
-                                  Validation="@(new Func<string?, string?>(ValidationService.ValidateMacAddress))"
-                                  Variant="Variant.Outlined"
-                                  HelperText="Format: XX:XX:XX:XX:XX:XX, XX-XX-XX-XX-XX-XX, or XXXXXXXXXXXX" />
-                </EditTemplate>
-            </PropertyColumn>
-            @*<PropertyColumn Property="x => x.IpAddress" Title="IP Address">
-                <EditTemplate>
-                    <MudTextField @bind-Value="context.Item.IpAddress"
-                                  Label="IP Address (optional)"
-                                  Immediate="true"
-                                  Validation="@(new Func<string, string?>(ValidationService.ValidateIpAddress))"
-                                  Variant="Variant.Outlined" />
-                </EditTemplate>
-            </PropertyColumn>
-            <PropertyColumn Property="x => x.BroadcastAddress" Title="Broadcast Address">
-                <EditTemplate>
-                    <MudTextField @bind-Value="context.Item.BroadcastAddress"
-                                  Label="Broadcast Address (optional)"
-                                  Immediate="true"
-                                  Validation="@(new Func<string, string?>(ValidationService.ValidateIpAddress))"
-                                  Variant="Variant.Outlined" />
-                </EditTemplate>
-            </PropertyColumn>*@
-            <TemplateColumn>
-                <CellTemplate>
-                    <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary"
-                               OnClick="@(async () => await WakePcDevice(context.Item))">
-                        Start
+            <MudStack Row="true" Spacing="2">
+                <MudButtonGroup Class="ma-0 pa-0" Color="Color.Default" Variant="Variant.Outlined">
+                    <MudIconButton Icon="@Icons.Material.Filled.TableRows"
+                                   OnClick="ToggleView"
+                                   aria-label="Switch to Table View" />
+                </MudButtonGroup>
+                <MudButtonGroup Class="ma-0 pa-0" Color="Color.Success" Variant="Variant.Filled">
+                    <MudButton OnClick="@(() => ShowDeviceEditDialog())">
+                        Add New Device
                     </MudButton>
-                </CellTemplate>
-            </TemplateColumn>
-            <TemplateColumn>
-                <CellTemplate>
-                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
-                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" OnClick="@(() => DeleteDeviceAsync(context.Item))" />
-                </CellTemplate>
-            </TemplateColumn>
-        </Columns>
-        <PagerContent>
-            <MudDataGridPager T="PcDeviceDTO" />
-        </PagerContent>
-    </MudDataGrid>
+                </MudButtonGroup>
+            </MudStack>
+        </MudStack>
+
+        @if (ViewPreferenceService.IsTableView) {
+            <MudDataGrid Items="devices"
+                         MultiSelection="false"
+                         Filterable="true"
+                         Dense="true"
+                         ReadOnly="true"
+                         Bordered="true">
+                <Columns>
+                    <PropertyColumn Property="x => x.Name" Title="Name" />
+                    <PropertyColumn Property="x => x.MacAddress" Title="MAC" />
+                    <PropertyColumn Property="x => x.IpAddress" Title="IP" />
+                    <PropertyColumn Property="x => x.BroadcastAddress" Title="Broadcast" />
+                    <TemplateColumn CellStyle="width: 200px">
+                        <CellTemplate>
+                            <MudFab Color="@(context.Item.IsOnline? Color.Success: Color.Error)"
+                                    StartIcon="@Icons.Material.Filled.PowerSettingsNew"
+                                    Size="Size.Small"
+                                    OnClick="@(async () => await WakePcDevice(context.Item))"
+                                    aria-label="@($"Wake device {context.Item.Name}")" />
+                            <MudIconButton Class="ms-4" Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit"
+                                           OnClick="@(() => ShowDeviceEditDialog(context.Item))" />
+                            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete"
+                                           OnClick="@(() => DeleteDeviceAsync(context.Item))" />
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="PcDeviceDTO" />
+                </PagerContent>
+            </MudDataGrid>
+        } else {
+            @if (devices.Any()) {
+                <MudGrid Spacing="3">
+                    @foreach (var device in devices) {
+                        <MudItem xs="12" sm="6" md="4">
+                            <DeviceCard Device="device"
+                                        OnStartClick="@(async () => await WakePcDevice(device))"
+                                        OnEditClick="@(() => ShowDeviceEditDialog(device))"
+                                        OnDeleteClick="@(async () => await DeleteDeviceAsync(device))" />
+                        </MudItem>
+                    }
+                </MudGrid>
+            } else {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                    No devices found. Click "Add New Device" to get started.
+                </MudAlert>
+            }
+        }
+    </MudStack>
 } else {
     <MudStack Class="mt-5" Justify="Justify.Center" AlignItems="AlignItems.Center">
         <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
@@ -103,11 +90,12 @@
 @code {
 
     private IEnumerable<PcDeviceDTO> devices = new List<PcDeviceDTO>();
-    private MudDataGrid<PcDeviceDTO> _grid = default!;
     private bool IsLoading { get; set; }
 
 
     protected override async Task OnInitializedAsync() {
+        ViewPreferenceService.OnViewChanged += StateHasChanged;
+        await ViewPreferenceService.LoadViewFromStorage(JsRuntime);
         await LoadData();
     }
 
@@ -135,9 +123,69 @@
         }
     }
 
-    private async Task NewDeviceAsync() {
-        var device = new PcDeviceDTO();
-        await _grid.SetEditingItemAsync(device);
+    private async Task ToggleView() {
+        await ViewPreferenceService.ToggleView(JsRuntime);
+    }
+
+    private async Task ShowDeviceEditDialog(PcDeviceDTO? device = null) {
+        var isNewDevice = device == null;
+        var deviceToEdit = device?.Clone() ?? new PcDeviceDTO();
+
+        var parameters = new DialogParameters<DeviceEditDialog> {
+            { x => x.Device, deviceToEdit },
+            { x => x.ValidationService, ValidationService }
+        };
+
+        var options = new DialogOptions {
+            BackdropClick = false,
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<DeviceEditDialog>(
+            isNewDevice ? "Add New Device" : "Edit Device",
+            parameters,
+            options
+        );
+
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled) {
+            var editedDevice = await dialog.GetReturnValueAsync<PcDeviceDTO>();
+            if (editedDevice is not null) {
+                if (isNewDevice) {
+                    await AddNewDevice(editedDevice);
+                } else {
+                    await UpdateDevice(editedDevice);
+                }
+            }
+        }
+    }
+
+    private async Task AddNewDevice(PcDeviceDTO editedDevice) {
+        var createDTO = new PcCreateDto {
+            Name = editedDevice.Name,
+            MacAddress = editedDevice.MacAddress,
+            IpAddress = editedDevice.IpAddress,
+            BroadcastAddress = editedDevice.BroadcastAddress
+        };
+        var resultAdd = await LANdalfApiService.AddPcDeviceAsync(createDTO, CancellationToken);
+        if (resultAdd.IsSuccess) {
+            await RefreshData();
+            Snackbar.Add($"Device '{editedDevice.Name}' added successfully", Severity.Success);
+        } else {
+            await DialogService.ShowMessageBoxAsync("Error", resultAdd.Error!.Message);
+        }
+    }
+
+    private async Task UpdateDevice(PcDeviceDTO editedDevice) {
+        var resultUpdate = await LANdalfApiService.UpdatePcDevice(editedDevice, CancellationToken);
+        if (resultUpdate.IsSuccess) {
+            await RefreshData();
+            Snackbar.Add($"Device '{editedDevice.Name}' updated successfully", Severity.Success);
+        } else {
+            await DialogService.ShowMessageBoxAsync("Error", resultUpdate.Error!.Message);
+        }
     }
 
     private async Task DeleteDeviceAsync(PcDeviceDTO item) {
@@ -154,43 +202,22 @@
         var result = await LANdalfApiService.DeletePcDeviceAsync(item.Id, CancellationToken);
         if (result.IsSuccess) {
             await RefreshData();
+            Snackbar.Add($"Device '{item.Name}' deleted successfully", Severity.Success);
         } else {
             await DialogService.ShowMessageBoxAsync("Error", result.Error!.Message);
         }
-    }
-
-    private async Task<DataGridEditFormAction> CommittedItemChanges(PcDeviceDTO item) {
-        if (item.Id == 0) {
-            var createDTO = new PcCreateDto {
-                Name = item.Name,
-                MacAddress = item.MacAddress,
-                IpAddress = item.IpAddress,
-                BroadcastAddress = item.BroadcastAddress
-            };
-            var resultAdd = await LANdalfApiService.AddPcDeviceAsync(createDTO, CancellationToken);
-            if (resultAdd.IsSuccess) {
-                await RefreshData();
-            } else {
-                await DialogService.ShowMessageBoxAsync("Error", resultAdd.Error!.Message);
-                return DataGridEditFormAction.KeepOpen;
-            }
-            return DataGridEditFormAction.Close;
-        }
-
-        var result = await LANdalfApiService.UpdatePcDevice(item, CancellationToken);
-        if (result.IsSuccess) {
-            await RefreshData();
-        } else {
-            await DialogService.ShowMessageBoxAsync("Error", result.Error!.Message);
-            return DataGridEditFormAction.KeepOpen;
-        }
-        return DataGridEditFormAction.Close;
     }
 
     private async Task WakePcDevice(PcDeviceDTO item) {
         var result = await LANdalfApiService.WakePcDeviceAsync(item.Id, CancellationToken);
         if (result.IsError) {
             await DialogService.ShowMessageBoxAsync("Error", result.Error!.Message);
-        }        
+        } else {
+            Snackbar.Add($"Wake-on-LAN packet sent to '{item.Name}'", Severity.Success);
+        }
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync() {
+        ViewPreferenceService.OnViewChanged -= StateHasChanged;
     }
 }
