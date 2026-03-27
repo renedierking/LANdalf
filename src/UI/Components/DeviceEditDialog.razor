@@ -2,58 +2,63 @@
 @using LANdalf.UI.ApiClient
 @using LANdalf.UI.Services
 
-<MudStack Spacing="3">
-    <MudTextField @bind-Value="Device.Name"
-                  Label="Name"
-                  Required="true"
-                  RequiredError="Name is required"
-                  MaxLength="64"
-                  Counter="64"
-                  Immediate="true"
-                  Validation="@(new Func<string?, string?>(ValidationService.ValidateName))"
-                  Variant="Variant.Outlined" />
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudTextField @bind-Value="Device.Name"
+                          Label="Name"
+                          Required="true"
+                          RequiredError="Name is required"
+                          MaxLength="64"
+                          Counter="64"
+                          Immediate="true"
+                          Validation="@(new Func<string?, string?>(ValidationService.ValidateName))"
+                          Variant="Variant.Outlined" />
 
-    <MudTextField @bind-Value="Device.MacAddress"
-                  Label="MAC Address"
-                  Required="true"
-                  RequiredError="MAC Address is required"
-                  Immediate="true"
-                  Validation="@(new Func<string?, string?>(ValidationService.ValidateMacAddress))"
-                  Variant="Variant.Outlined"
-                  HelperText="Format: XX:XX:XX:XX:XX:XX, XX-XX-XX-XX-XX-XX, or XXXXXXXXXXXX" />
+            <MudTextField @bind-Value="Device.MacAddress"
+                          Label="MAC Address"
+                          Required="true"
+                          RequiredError="MAC Address is required"
+                          Immediate="true"
+                          Validation="@(new Func<string?, string?>(ValidationService.ValidateMacAddress))"
+                          Variant="Variant.Outlined"
+                          HelperText="Format: XX:XX:XX:XX:XX:XX, XX-XX-XX-XX-XX-XX, or XXXXXXXXXXXX" />
 
-    <MudTextField @bind-Value="Device.IpAddress"
-                  Label="IP Address (optional)"
-                  Immediate="true"
-                  Validation="@(new Func<string?, string?>(ValidationService.ValidateIpAddress))"
-                  Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="Device.IpAddress"
+                          Label="IP Address (optional)"
+                          Immediate="true"
+                          Validation="@(new Func<string?, string?>(ValidationService.ValidateIpAddress))"
+                          Variant="Variant.Outlined" />
 
-    <MudTextField @bind-Value="Device.BroadcastAddress"
-                  Label="Broadcast Address (optional)"
-                  Immediate="true"
-                  Validation="@(new Func<string?, string?>(ValidationService.ValidateIpAddress))"
-                  Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="Device.BroadcastAddress"
+                          Label="Broadcast Address (optional)"
+                          Immediate="true"
+                          Validation="@(new Func<string?, string?>(ValidationService.ValidateIpAddress))"
+                          Variant="Variant.Outlined" />
 
-    <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-4">
-        <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Save</MudButton>
-    </MudStack>
-</MudStack>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-4">
+                <MudButton OnClick="Cancel">Cancel</MudButton>
+                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Save</MudButton>
+            </MudStack>
+    </DialogActions>
+</MudDialog>
+
+
 
 @code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
     [Parameter]
     public PcDeviceDTO Device { get; set; } = null!;
 
     [Parameter]
     public IDeviceValidationService ValidationService { get; set; } = null!;
 
-    [Parameter]
-    public EventCallback OnCancel { get; set; }
+    private void Submit() => MudDialog.Close(DialogResult.Ok(Device));
 
-    [Parameter]
-    public EventCallback<PcDeviceDTO> OnSubmit { get; set; }
-
-    async Task Cancel() => await OnCancel.InvokeAsync();
-
-    async Task Submit() => await OnSubmit.InvokeAsync(Device);
+    private void Cancel() => MudDialog.Cancel();
 }
