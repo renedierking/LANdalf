@@ -22,7 +22,7 @@
             <MudIconButton Icon="@(isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
                            Color="Color.Inherit"
                            OnClick="@ToggleTheme"
-                           Title="@(isDarkMode ? "Light Mode" : "Dark Mode")" />
+                           aria-label="@(isDarkMode ? "Light Mode" : "Dark Mode")" />
         </MudStack>
     </MudAppBar>
 
@@ -31,6 +31,18 @@
             @Body
         </MudContainer>
     </MudMainContent>
+
+    <MudAppBar Bottom="true" Fixed="true" Elevation="1" Style="top: auto; bottom: 0; background: transparent;">
+        <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="3" Class="w-100">
+            <MudText Typo="Typo.caption" Color="Color.Default">LANdalf v1.0.0</MudText>
+            <MudLink Href="https://github.com/renedierking/LANdalf" Target="_blank" Typo="Typo.caption">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudIcon Icon="@Icons.Custom.Brands.GitHub" Size="Size.Small" />
+                    <span>GitHub</span>
+                </MudStack>
+            </MudLink>
+        </MudStack>
+    </MudAppBar>
 </MudLayout>
 
 @code {

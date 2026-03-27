@@ -15,13 +15,16 @@ public class HomeComponentTests_Simplified : BunitContext {
     private readonly Mock<LANdalfApiClient> _mockApiClient;
     private readonly LANdalfApiService _mockApiService;
     private readonly Mock<IDeviceValidationService> _mockValidationService;
+    private readonly ViewPreferenceService _viewPreferenceService;
 
     public HomeComponentTests_Simplified() {
         _mockApiClient = new Mock<LANdalfApiClient>(new System.Net.Http.HttpClient());
         _mockApiService = new LANdalfApiService(_mockApiClient.Object);
         _mockValidationService = new Mock<IDeviceValidationService>();
+        _viewPreferenceService = new ViewPreferenceService();
         Services.AddScoped(_ => _mockApiService);
         Services.AddScoped<IDeviceValidationService>(_ => _mockValidationService.Object);
+        Services.AddScoped(_ => _viewPreferenceService);
         Services.AddMudServices();
 
         // Setup MudBlazor JSInterop to handle any call without specific setup

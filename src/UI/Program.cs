@@ -13,6 +13,7 @@ namespace LANdalf.UI {
 
             builder.Services.AddMudServices();
             builder.Services.AddScoped<ThemeService>();
+            builder.Services.AddScoped<ViewPreferenceService>();
 
             var apiBase = builder.Configuration["ApiBaseAddress"] ?? builder.HostEnvironment.BaseAddress;
 
