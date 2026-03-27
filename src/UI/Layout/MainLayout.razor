@@ -32,13 +32,12 @@
         </MudContainer>
     </MudMainContent>
 
-    <MudAppBar Bottom="true" Fixed="true" Elevation="1" Style="top: auto; bottom: 0; background: transparent;">
+    <MudAppBar Bottom="true" Fixed="true" Style="top: auto; bottom: 0;">
         <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="3" Class="w-100">
-            <MudText Typo="Typo.caption" Color="Color.Default">LANdalf v1.0.0</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Default" Class="mt-1">@($"LANdalf v{typeof(Program).Assembly.GetName().Version?.ToString(3)}")</MudText>
             <MudLink Href="https://github.com/renedierking/LANdalf" Target="_blank" Typo="Typo.caption">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                    <MudIcon Icon="@Icons.Custom.Brands.GitHub" Size="Size.Small" />
-                    <span>GitHub</span>
+                    <MudIcon Color="Color.Default" Icon="@Icons.Custom.Brands.GitHub" Size="Size.Small" />
                 </MudStack>
             </MudLink>
         </MudStack>
