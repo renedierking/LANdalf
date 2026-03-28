@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.SignalR.Client;
+﻿using Microsoft.AspNetCore.SignalR.Client;
 using LANdalf.UI.ApiClient;
 
 namespace LANdalf.UI.Services {
@@ -11,7 +11,7 @@ namespace LANdalf.UI.Services {
         public DeviceStatusHubService(IConfiguration configuration, ILogger<DeviceStatusHubService> logger) {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            var apiUrl = configuration["ApiUrl"] ?? "https://localhost:7179";
+            var apiUrl = (configuration["ApiUrl"] ?? "https://localhost:7179").TrimEnd('/');
             var hubUrl = $"{apiUrl}/hubs/devicestatus";
 
             _hubConnection = new HubConnectionBuilder()
