@@ -42,6 +42,8 @@ namespace API {
                 builder.Services.AddScoped<IAppDbService, AppDbService>();
                 builder.Services.AddScoped<WakeOnLanService>();
                 builder.Services.AddScoped<PcDeviceHandler>();
+                builder.Services.AddSingleton<IDeviceMonitoringService, DeviceMonitoringService>();
+                builder.Services.AddHostedService(sp => (DeviceMonitoringService)sp.GetRequiredService<IDeviceMonitoringService>());
                 builder.Services.AddMinimalApiStrategies();
 
                 builder.Services.AddApiVersioning(options => {
