@@ -5,6 +5,7 @@
         string MacAddress,
         string? IpAddress,
         string? BroadcastAddress,
-        bool IsOnline
+        bool IsOnline,
+        DateTime? OnlineSince
     );
 }

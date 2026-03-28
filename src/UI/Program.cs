@@ -17,6 +17,13 @@ namespace LANdalf.UI {
 
             var apiBase = builder.Configuration["ApiBaseAddress"] ?? builder.HostEnvironment.BaseAddress;
 
+            // Store API URL in configuration for SignalR hub service
+#if DEBUG
+            builder.Configuration["ApiUrl"] = apiBase;
+#else
+            builder.Configuration["ApiUrl"] = builder.HostEnvironment.BaseAddress;
+#endif
+
             builder.Services.AddHttpClient("LANdalf.Api", client => {
 #if DEBUG
                 client.BaseAddress = new Uri(apiBase);
@@ -31,6 +38,7 @@ namespace LANdalf.UI {
 
             builder.Services.AddScoped<LANdalfApiService>();
             builder.Services.AddScoped<IDeviceValidationService, DeviceValidationService>();
+            builder.Services.AddSingleton<DeviceStatusHubService>();
 
             await builder.Build().RunAsync();
         }

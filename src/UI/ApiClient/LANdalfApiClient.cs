@@ -720,6 +720,9 @@ namespace LANdalf.UI.ApiClient {
         [System.Text.Json.Serialization.JsonPropertyName("isOnline")]
         public bool IsOnline { get; set; }
 
+        [System.Text.Json.Serialization.JsonPropertyName("onlineSince")]
+        public System.DateTimeOffset? OnlineSince { get; set; }
+
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
         [System.Text.Json.Serialization.JsonExtensionData]

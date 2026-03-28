@@ -9,5 +9,6 @@ namespace API.Models {
         public IPAddress? IpAddress { get; set; } = null;
         public IPAddress? BroadcastAddress { get; set; } = null;
         public bool IsOnline { get; set; }
+        public DateTime? OnlineSince { get; set; }
     }
 }

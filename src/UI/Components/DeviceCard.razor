@@ -1,47 +1,57 @@
 @namespace LANdalf.UI.Components
 @using LANdalf.UI.ApiClient
 
-<MudCard Elevation="3" Class="device-card">
+<MudCard Elevation="4" Class="rounded-4">
     <MudCardContent>
-        <MudStack Spacing="3">
-            <MudText Typo="Typo.h5">@Device.Name</MudText>
-
-            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.End">
-                <MudFab Color="@(Device.IsOnline ? Color.Success : Color.Error)"
-                        StartIcon="@Icons.Material.Filled.PowerSettingsNew"
-                        Size="Size.Medium"
-                        OnClick="@(() => OnStartClick.InvokeAsync())"
-                        aria-label="@($"Wake device {Device.Name}")" />
-
-                <MudStack Spacing="1" AlignItems="AlignItems.End">
-                    <MudIconButton Icon="@Icons.Material.Outlined.Edit"
-                                   Size="Size.Small"
-                                   OnClick="@(() => OnEditClick.InvokeAsync())"
-                                   aria-label="@($"Edit device {Device.Name}")" />
-                    <MudIconButton Icon="@Icons.Material.Outlined.Delete"
-                                   Size="Size.Small"
-                                   OnClick="@(() => OnDeleteClick.InvokeAsync())"
-                                   aria-label="@($"Delete device {Device.Name}")" />
-                </MudStack>
-            </MudStack>
+        <MudText Typo="Typo.h5">@Device.Name</MudText>
+                
+        <MudStack Class="mt-3" Style="height: 70px" Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.Center">
+            <MudFab Color="@(Device.IsOnline? Color.Success: Color.Error)"
+                    StartIcon="@Icons.Material.Filled.PowerSettingsNew"
+                    Size="Size.Medium"
+                    OnClick="@(() => OnStartClick.InvokeAsync())"
+                    aria-label="@($"Wake device {Device.Name}")" />
 
             <MudStack Spacing="1">
                 <MudText Typo="Typo.body2" Color="Color.Secondary">
                     <MudIcon Icon="@Icons.Material.Filled.Cable" Size="Size.Small" Style="vertical-align: middle;" />
-                    MAC: @Device.MacAddress
+                    @Device.MacAddress
                 </MudText>
                 @if (!string.IsNullOrWhiteSpace(Device.IpAddress)) {
                     <MudText Typo="Typo.body2" Color="Color.Secondary">
                         <MudIcon Icon="@Icons.Material.Filled.Router" Size="Size.Small" Style="vertical-align: middle;" />
-                        IP: @Device.IpAddress
+                        @Device.IpAddress
                     </MudText>
                 }
                 @if (!string.IsNullOrWhiteSpace(Device.BroadcastAddress)) {
                     <MudText Typo="Typo.body2" Color="Color.Secondary">
                         <MudIcon Icon="@Icons.Material.Filled.CellTower" Size="Size.Small" Style="vertical-align: middle;" />
-                        Broadcast: @Device.BroadcastAddress
+                        @Device.BroadcastAddress
                     </MudText>
                 }
+                    
+            </MudStack>
+        </MudStack>
+
+        <MudStack Row="true" Class="mt-3">
+            @if (Device.IsOnline) {
+                <MudStack Row="true" Spacing="1"> 
+                    <MudIcon Color="Color.Success" Icon="@Icons.Material.Filled.Schedule" Size="Size.Small"/>
+                    <MudText Typo="Typo.body2" Color="Color.Success">
+                        Online since: @(Device.OnlineSince.HasValue ? @Formatter.FormatOnlineSince(Device.OnlineSince.Value) : "unknown")
+                    </MudText>
+                </MudStack>
+            }
+            <MudSpacer />
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End">
+                <MudIconButton Icon="@Icons.Material.Outlined.Edit"
+                               Size="Size.Small"
+                               OnClick="@(() => OnEditClick.InvokeAsync())"
+                               aria-label="@($"Edit device {Device.Name}")" />
+                <MudIconButton Icon="@Icons.Material.Outlined.Delete"
+                               Size="Size.Small"
+                               OnClick="@(() => OnDeleteClick.InvokeAsync())"
+                               aria-label="@($"Delete device {Device.Name}")" />
             </MudStack>
         </MudStack>
     </MudCardContent>
