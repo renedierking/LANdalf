@@ -1,43 +1,41 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Net.NetworkInformation;
 
 namespace API.Services {
     public class DeviceMonitoringService : BackgroundService, IDeviceMonitoringService {
         private readonly ILogger<DeviceMonitoringService> _logger;
         private readonly IServiceScopeFactory _serviceScopeFactory;
-        private readonly IConfiguration _configuration;
+        private readonly DeviceMonitoringOptions _options;
 
-        public bool IsEnabled { get; }
-        public int IntervalSeconds { get; }
-        public int TimeoutMilliseconds { get; }
+        public bool IsEnabled => _options.Enabled;
+        public int IntervalSeconds => _options.IntervalSeconds;
+        public int TimeoutMilliseconds => _options.TimeoutMilliseconds;
 
         public DeviceMonitoringService(
             ILogger<DeviceMonitoringService> logger,
             IServiceScopeFactory serviceScopeFactory,
-            IConfiguration configuration) {
+            IOptions<DeviceMonitoringOptions> options) {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _serviceScopeFactory = serviceScopeFactory ?? throw new ArgumentNullException(nameof(serviceScopeFactory));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            if (options == null) throw new ArgumentNullException(nameof(options));
 
-            // Load configuration with defaults
-            IsEnabled = _configuration.GetValue<bool>("DeviceMonitoring:Enabled", true);
-            IntervalSeconds = _configuration.GetValue<int>("DeviceMonitoring:IntervalSeconds", 30);
-            TimeoutMilliseconds = _configuration.GetValue<int>("DeviceMonitoring:TimeoutMilliseconds", 2000);
+            _options = options.Value;
 
             // Validate configuration
-            if (IntervalSeconds < 5) {
-                _logger.LogWarning("DeviceMonitoring:IntervalSeconds is too low ({Interval}s), using minimum of 5s", IntervalSeconds);
-                IntervalSeconds = 5;
+            if (_options.IntervalSeconds < 5) {
+                _logger.LogWarning("DeviceMonitoring:IntervalSeconds is too low ({Interval}s), using minimum of 5s", _options.IntervalSeconds);
+                _options.IntervalSeconds = 5;
             }
-            if (TimeoutMilliseconds < 100) {
-                _logger.LogWarning("DeviceMonitoring:TimeoutMilliseconds is too low ({Timeout}ms), using minimum of 100ms", TimeoutMilliseconds);
-                TimeoutMilliseconds = 100;
+            if (_options.TimeoutMilliseconds < 100) {
+                _logger.LogWarning("DeviceMonitoring:TimeoutMilliseconds is too low ({Timeout}ms), using minimum of 100ms", _options.TimeoutMilliseconds);
+                _options.TimeoutMilliseconds = 100;
             }
 
             _logger.LogInformation(
                 "DeviceMonitoringService configured: Enabled={Enabled}, Interval={Interval}s, Timeout={Timeout}ms",
-                IsEnabled, IntervalSeconds, TimeoutMilliseconds);
+                _options.Enabled, _options.IntervalSeconds, _options.TimeoutMilliseconds);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -62,7 +60,7 @@ namespace API.Services {
                 }
 
                 try {
-                    await Task.Delay(TimeSpan.FromSeconds(IntervalSeconds), stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(_options.IntervalSeconds), stoppingToken);
                 } catch (OperationCanceledException) {
                     // Expected when stopping
                     break;
@@ -132,7 +130,7 @@ namespace API.Services {
         private async Task<bool> PingDeviceAsync(System.Net.IPAddress ipAddress, CancellationToken cancellationToken) {
             try {
                 using var ping = new Ping();
-                var reply = await ping.SendPingAsync(ipAddress, TimeoutMilliseconds);
+                var reply = await ping.SendPingAsync(ipAddress, _options.TimeoutMilliseconds);
                 return reply.Status == IPStatus.Success;
             } catch (PingException ex) {
                 _logger.LogDebug(ex, "Ping failed for {IpAddress}", ipAddress);

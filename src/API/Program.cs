@@ -39,6 +39,9 @@ namespace API {
                 builder.Services.AddDbContext<AppDbContext>(o =>
                     o.UseSqlite($"Data Source={dbPath}"));
 
+                builder.Services.Configure<DeviceMonitoringOptions>(
+                    builder.Configuration.GetSection(DeviceMonitoringOptions.SectionName));
+
                 builder.Services.AddScoped<IAppDbService, AppDbService>();
                 builder.Services.AddScoped<WakeOnLanService>();
                 builder.Services.AddScoped<PcDeviceHandler>();

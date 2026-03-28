@@ -1,9 +1,9 @@
 using API.Models;
 using API.Services;
 using FluentAssertions;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Moq;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -16,7 +16,6 @@ public class DeviceMonitoringServiceTests {
     private readonly Mock<IServiceScopeFactory> _mockScopeFactory;
     private readonly Mock<IServiceScope> _mockScope;
     private readonly Mock<IServiceProvider> _mockServiceProvider;
-    private readonly IConfiguration _configuration;
 
     public DeviceMonitoringServiceTests() {
         _mockAppDbService = new Mock<IAppDbService>();
@@ -28,30 +27,29 @@ public class DeviceMonitoringServiceTests {
         _mockScopeFactory.Setup(f => f.CreateScope()).Returns(_mockScope.Object);
         _mockScope.Setup(s => s.ServiceProvider).Returns(_mockServiceProvider.Object);
         _mockServiceProvider.Setup(p => p.GetService(typeof(IAppDbService))).Returns(_mockAppDbService.Object);
+    }
 
-        // Default configuration
-        var configData = new Dictionary<string, string?> {
-            ["DeviceMonitoring:Enabled"] = "true",
-            ["DeviceMonitoring:IntervalSeconds"] = "30",
-            ["DeviceMonitoring:TimeoutMilliseconds"] = "2000"
+    private static IOptions<DeviceMonitoringOptions> CreateOptions(
+        bool? enabled = null,
+        int? intervalSeconds = null,
+        int? timeoutMilliseconds = null) {
+        var options = new DeviceMonitoringOptions {
+            Enabled = enabled ?? true,
+            IntervalSeconds = intervalSeconds ?? 30,
+            TimeoutMilliseconds = timeoutMilliseconds ?? 2000
         };
-        _configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(configData)
-            .Build();
+        return Options.Create(options);
     }
 
     #region Configuration Tests
 
     [Fact]
     public void Constructor_LoadsDefaultConfiguration_WhenNoConfigProvided() {
-        // Arrange
-        var emptyConfig = new ConfigurationBuilder().Build();
-
-        // Act
+        // Arrange & Act
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            emptyConfig);
+            CreateOptions());
 
         // Assert
         service.IsEnabled.Should().BeTrue();
@@ -61,19 +59,11 @@ public class DeviceMonitoringServiceTests {
 
     [Fact]
     public void Constructor_LoadsCustomConfiguration_WhenConfigProvided() {
-        // Arrange
-        var configData = new Dictionary<string, string?> {
-            ["DeviceMonitoring:Enabled"] = "false",
-            ["DeviceMonitoring:IntervalSeconds"] = "60",
-            ["DeviceMonitoring:TimeoutMilliseconds"] = "5000"
-        };
-        var config = new ConfigurationBuilder().AddInMemoryCollection(configData).Build();
-
-        // Act
+        // Arrange & Act
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            config);
+            CreateOptions(enabled: false, intervalSeconds: 60, timeoutMilliseconds: 5000));
 
         // Assert
         service.IsEnabled.Should().BeFalse();
@@ -83,17 +73,11 @@ public class DeviceMonitoringServiceTests {
 
     [Fact]
     public void Constructor_EnforcesMinimumIntervalSeconds() {
-        // Arrange
-        var configData = new Dictionary<string, string?> {
-            ["DeviceMonitoring:IntervalSeconds"] = "1"
-        };
-        var config = new ConfigurationBuilder().AddInMemoryCollection(configData).Build();
-
-        // Act
+        // Arrange & Act
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            config);
+            CreateOptions(intervalSeconds: 1));
 
         // Assert
         service.IntervalSeconds.Should().Be(5); // Minimum enforced
@@ -101,17 +85,11 @@ public class DeviceMonitoringServiceTests {
 
     [Fact]
     public void Constructor_EnforcesMinimumTimeoutMilliseconds() {
-        // Arrange
-        var configData = new Dictionary<string, string?> {
-            ["DeviceMonitoring:TimeoutMilliseconds"] = "50"
-        };
-        var config = new ConfigurationBuilder().AddInMemoryCollection(configData).Build();
-
-        // Act
+        // Arrange & Act
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            config);
+            CreateOptions(timeoutMilliseconds: 50));
 
         // Assert
         service.TimeoutMilliseconds.Should().Be(100); // Minimum enforced
@@ -121,18 +99,18 @@ public class DeviceMonitoringServiceTests {
     public void Constructor_ThrowsArgumentNullException_WhenLoggerIsNull() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new DeviceMonitoringService(null!, _mockScopeFactory.Object, _configuration));
+            new DeviceMonitoringService(null!, _mockScopeFactory.Object, CreateOptions()));
     }
 
     [Fact]
     public void Constructor_ThrowsArgumentNullException_WhenScopeFactoryIsNull() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new DeviceMonitoringService(NullLogger<DeviceMonitoringService>.Instance, null!, _configuration));
+            new DeviceMonitoringService(NullLogger<DeviceMonitoringService>.Instance, null!, CreateOptions()));
     }
 
     [Fact]
-    public void Constructor_ThrowsArgumentNullException_WhenConfigurationIsNull() {
+    public void Constructor_ThrowsArgumentNullException_WhenOptionsIsNull() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
             new DeviceMonitoringService(NullLogger<DeviceMonitoringService>.Instance, _mockScopeFactory.Object, null!));
@@ -148,7 +126,7 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            _configuration);
+            CreateOptions());
 
         _mockAppDbService.Setup(s => s.GetAllPcDevicesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<PcDevice>());
@@ -167,7 +145,7 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            _configuration);
+            CreateOptions());
 
         var devices = new List<PcDevice> {
             new() {
@@ -197,7 +175,7 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            _configuration);
+            CreateOptions());
 
         var devices = new List<PcDevice> {
             new() {
@@ -230,7 +208,7 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            _configuration);
+            CreateOptions());
 
         // Use loopback address which should be reachable
         var devices = new List<PcDevice> {
@@ -264,7 +242,7 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            _configuration);
+            CreateOptions());
 
         // Use an unreachable private IP
         var devices = new List<PcDevice> {
@@ -295,7 +273,7 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            _configuration);
+            CreateOptions());
 
         var devices = new List<PcDevice> {
             new() {
@@ -337,7 +315,7 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            _configuration);
+            CreateOptions());
 
         var cts = new CancellationTokenSource();
 
@@ -357,15 +335,10 @@ public class DeviceMonitoringServiceTests {
     [Fact]
     public async Task ExecuteAsync_DoesNotStart_WhenDisabled() {
         // Arrange
-        var configData = new Dictionary<string, string?> {
-            ["DeviceMonitoring:Enabled"] = "false"
-        };
-        var config = new ConfigurationBuilder().AddInMemoryCollection(configData).Build();
-
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            config);
+            CreateOptions(enabled: false));
 
         _mockAppDbService.Setup(s => s.GetAllPcDevicesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<PcDevice>());
@@ -374,7 +347,7 @@ public class DeviceMonitoringServiceTests {
 
         // Act
         await service.StartAsync(cts.Token);
-        await Task.Delay(50); // Wait a bit
+        await Task.Delay(50, TestContext.Current.CancellationToken); // Wait a bit
         await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert
@@ -385,16 +358,10 @@ public class DeviceMonitoringServiceTests {
     [Fact]
     public async Task ExecuteAsync_StartsMonitoring_WhenEnabled() {
         // Arrange
-        var configData = new Dictionary<string, string?> {
-            ["DeviceMonitoring:Enabled"] = "true",
-            ["DeviceMonitoring:IntervalSeconds"] = "5" // Minimum allowed
-        };
-        var config = new ConfigurationBuilder().AddInMemoryCollection(configData).Build();
-
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            config);
+            CreateOptions(enabled: true, intervalSeconds: 5)); // Minimum allowed
 
         _mockAppDbService.Setup(s => s.GetAllPcDevicesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<PcDevice>());
@@ -403,7 +370,7 @@ public class DeviceMonitoringServiceTests {
 
         // Act
         await service.StartAsync(cts.Token);
-        await Task.Delay(6000); // Wait for initial delay (5s) + first check
+        await Task.Delay(6000, TestContext.Current.CancellationToken); // Wait for initial delay (5s) + first check
         cts.Cancel();
         await service.StopAsync(TestContext.Current.CancellationToken);
 
