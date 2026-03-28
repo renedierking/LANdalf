@@ -21,9 +21,10 @@
             <MudText Typo="Typo.h6">Devices</MudText>
             <MudStack Row="true" Spacing="2">
                 <MudButtonGroup Class="ma-0 pa-0" Color="Color.Default" Variant="Variant.Outlined">
-                    <MudIconButton Icon="@Icons.Material.Filled.TableRows"
+                    <MudIconButton Icon="@(ViewPreferenceService.IsTableView? @Icons.Material.Filled.Apps : Icons.Material.Filled.TableRows)"
                                    OnClick="ToggleView"
-                                   aria-label="Switch to Table View" />
+                                   title="@(ViewPreferenceService.IsTableView ? "Switch to Card-View" : "Switch to Table-View")"
+                                   aria-label="Switch between views" />
                 </MudButtonGroup>
                 <MudButtonGroup Class="ma-0 pa-0" Color="Color.Success" Variant="Variant.Filled">
                     <MudButton OnClick="@(() => ShowDeviceEditDialog())">
@@ -39,19 +40,34 @@
                          Filterable="true"
                          Dense="true"
                          ReadOnly="true"
+                         Hover="true"
                          Bordered="true">
                 <Columns>
                     <PropertyColumn Property="x => x.Name" Title="Name" />
                     <PropertyColumn Property="x => x.MacAddress" Title="MAC" />
                     <PropertyColumn Property="x => x.IpAddress" Title="IP" />
                     <PropertyColumn Property="x => x.BroadcastAddress" Title="Broadcast" />
+                    <TemplateColumn T="PcDeviceDTO" Title="State">
+                        <CellTemplate>
+                            @if (context.Item.IsOnline) {
+                                var device = context.Item;
+                                <MudText Typo="Typo.body2" Color="Color.Success">
+                                    <MudChip Color="Color.Success" Size="Size.Medium">
+                                        @(device.OnlineSince.HasValue? @Formatter.FormatOnlineSince(device.OnlineSince.Value) : "unknown")
+                                    </MudChip>
+                                </MudText>
+                            } else {
+                                <MudChip Color="Color.Error" Size="Size.Medium">Offline</MudChip>
+                            }
+                        </CellTemplate>
+                    </TemplateColumn>
                     <TemplateColumn CellStyle="width: 200px">
                         <CellTemplate>
-                            <MudFab Color="@(context.Item.IsOnline? Color.Success: Color.Error)"
-                                    StartIcon="@Icons.Material.Filled.PowerSettingsNew"
-                                    Size="Size.Small"
-                                    OnClick="@(async () => await WakePcDevice(context.Item))"
-                                    aria-label="@($"Wake device {context.Item.Name}")" />
+                            <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                                       OnClick="@(async () => await WakePcDevice(context.Item))"
+                                       aria-label="@($"Wake device {context.Item.Name}")">
+                                Start
+                            </MudButton>
                             <MudIconButton Class="ms-4" Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit"
                                            OnClick="@(() => ShowDeviceEditDialog(context.Item))" />
                             <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete"
