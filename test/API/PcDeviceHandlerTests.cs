@@ -235,7 +235,7 @@ public class PcDeviceHandlerTests {
         _mockAppDbService.Setup(s => s.UpdatePcDeviceAsync(It.IsAny<PcDevice>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(updatedDevice);
 
-        var dto = new PcDeviceDTO(1, "NewName", "AA-BB-CC-DD-EE-FF", "192.168.1.100", "192.168.1.255", false);
+        var dto = new PcDeviceDTO(1, "NewName", "AA-BB-CC-DD-EE-FF", "192.168.1.100", "192.168.1.255", false, null);
 
         // Act
         var result = await _handler.SetDevice(1, dto, TestContext.Current.CancellationToken);
@@ -252,7 +252,7 @@ public class PcDeviceHandlerTests {
         _mockAppDbService.Setup(s => s.GetPcDeviceByIdAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync((PcDevice?)null);
 
-        var dto = new PcDeviceDTO(999, "NewName", "00-11-22-33-44-55", null, null, false);
+        var dto = new PcDeviceDTO(999, "NewName", "00-11-22-33-44-55", null, null, false, null);
 
         // Act
         var result = await _handler.SetDevice(999, dto, TestContext.Current.CancellationToken);
@@ -276,7 +276,7 @@ public class PcDeviceHandlerTests {
         _mockAppDbService.Setup(s => s.GetPcDeviceByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(device);
 
-        var dto = new PcDeviceDTO(1, "TestPC", "INVALID-MAC", null, null, false);
+        var dto = new PcDeviceDTO(1, "TestPC", "INVALID-MAC", null, null, false, null);
 
         // Act
         var result = await _handler.SetDevice(1, dto, TestContext.Current.CancellationToken);

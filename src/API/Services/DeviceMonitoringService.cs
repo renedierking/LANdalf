@@ -2,12 +2,16 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net.NetworkInformation;
+using Microsoft.AspNetCore.SignalR;
+using API.Hubs;
+using LANdalf.API.Extensions;
 
 namespace API.Services {
     public class DeviceMonitoringService : BackgroundService, IDeviceMonitoringService {
         private readonly ILogger<DeviceMonitoringService> _logger;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly DeviceMonitoringOptions _options;
+        private readonly IHubContext<DeviceStatusHub> _hubContext;
 
         public bool IsEnabled => _options.Enabled;
         public int IntervalSeconds => _options.IntervalSeconds;
@@ -16,9 +20,11 @@ namespace API.Services {
         public DeviceMonitoringService(
             ILogger<DeviceMonitoringService> logger,
             IServiceScopeFactory serviceScopeFactory,
-            IOptions<DeviceMonitoringOptions> options) {
+            IOptions<DeviceMonitoringOptions> options,
+            IHubContext<DeviceStatusHub> hubContext) {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _serviceScopeFactory = serviceScopeFactory ?? throw new ArgumentNullException(nameof(serviceScopeFactory));
+            _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
             if (options == null) throw new ArgumentNullException(nameof(options));
 
             _options = options.Value;
@@ -103,8 +109,18 @@ namespace API.Services {
                 // If device was previously online, mark it as offline
                 if (device.IsOnline) {
                     device.IsOnline = false;
+                    device.OnlineSince = null;
                     await dbService.UpdatePcDeviceAsync(device, cancellationToken);
                     _logger.LogInformation("Device {Name} (ID={Id}) marked offline (no IP address)", device.Name, device.Id);
+
+                    // Broadcast status change to connected clients via SignalR
+                    try {
+                        var deviceDto = device.ToDto();
+                        await _hubContext.Clients.All.SendAsync("DeviceStatusChanged", deviceDto, cancellationToken);
+                        _logger.LogDebug("Broadcasted offline status for device {Name} via SignalR", device.Name);
+                    } catch (Exception ex) {
+                        _logger.LogWarning(ex, "Failed to broadcast offline status for device {Name} via SignalR", device.Name);
+                    }
                 }
                 return;
             }
@@ -114,12 +130,31 @@ namespace API.Services {
             // Only update if status changed
             if (device.IsOnline != isOnline) {
                 device.IsOnline = isOnline;
+
+                // Update OnlineSince timestamp
+                if (isOnline) {
+                    // Device just came online
+                    device.OnlineSince = DateTime.UtcNow;
+                } else {
+                    // Device just went offline
+                    device.OnlineSince = null;
+                }
+
                 await dbService.UpdatePcDeviceAsync(device, cancellationToken);
 
                 string status = isOnline ? "ONLINE" : "OFFLINE";
                 _logger.LogInformation(
                     "Device {Name} (ID={Id}, IP={IpAddress}) is now {Status}",
                     device.Name, device.Id, device.IpAddress, status);
+
+                // Broadcast status change to connected clients via SignalR
+                try {
+                    var deviceDto = device.ToDto();
+                    await _hubContext.Clients.All.SendAsync("DeviceStatusChanged", deviceDto, cancellationToken);
+                    _logger.LogDebug("Broadcasted status change for device {Name} via SignalR", device.Name);
+                } catch (Exception ex) {
+                    _logger.LogWarning(ex, "Failed to broadcast status change for device {Name} via SignalR", device.Name);
+                }
             } else {
                 _logger.LogDebug(
                     "Device {Name} (ID={Id}, IP={IpAddress}) status unchanged: {Status}",

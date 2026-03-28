@@ -1,6 +1,8 @@
+using API.Hubs;
 using API.Models;
 using API.Services;
 using FluentAssertions;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -16,12 +18,22 @@ public class DeviceMonitoringServiceTests {
     private readonly Mock<IServiceScopeFactory> _mockScopeFactory;
     private readonly Mock<IServiceScope> _mockScope;
     private readonly Mock<IServiceProvider> _mockServiceProvider;
+    private readonly Mock<IHubContext<DeviceStatusHub>> _mockHubContext;
+    private readonly Mock<IHubClients> _mockHubClients;
+    private readonly Mock<IClientProxy> _mockClientProxy;
 
     public DeviceMonitoringServiceTests() {
         _mockAppDbService = new Mock<IAppDbService>();
         _mockScopeFactory = new Mock<IServiceScopeFactory>();
         _mockScope = new Mock<IServiceScope>();
         _mockServiceProvider = new Mock<IServiceProvider>();
+        _mockHubContext = new Mock<IHubContext<DeviceStatusHub>>();
+        _mockHubClients = new Mock<IHubClients>();
+        _mockClientProxy = new Mock<IClientProxy>();
+
+        // Setup SignalR mocks
+        _mockHubContext.Setup(h => h.Clients).Returns(_mockHubClients.Object);
+        _mockHubClients.Setup(c => c.All).Returns(_mockClientProxy.Object);
 
         // Setup service scope chain
         _mockScopeFactory.Setup(f => f.CreateScope()).Returns(_mockScope.Object);
@@ -49,7 +61,8 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            CreateOptions());
+            CreateOptions(),
+            _mockHubContext.Object);
 
         // Assert
         service.IsEnabled.Should().BeTrue();
@@ -63,7 +76,8 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            CreateOptions(enabled: false, intervalSeconds: 60, timeoutMilliseconds: 5000));
+            CreateOptions(enabled: false, intervalSeconds: 60, timeoutMilliseconds: 5000),
+            _mockHubContext.Object);
 
         // Assert
         service.IsEnabled.Should().BeFalse();
@@ -77,7 +91,8 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            CreateOptions(intervalSeconds: 1));
+            CreateOptions(intervalSeconds: 1),
+            _mockHubContext.Object);
 
         // Assert
         service.IntervalSeconds.Should().Be(5); // Minimum enforced
@@ -89,7 +104,8 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            CreateOptions(timeoutMilliseconds: 50));
+            CreateOptions(timeoutMilliseconds: 50),
+            _mockHubContext.Object);
 
         // Assert
         service.TimeoutMilliseconds.Should().Be(100); // Minimum enforced
@@ -99,21 +115,21 @@ public class DeviceMonitoringServiceTests {
     public void Constructor_ThrowsArgumentNullException_WhenLoggerIsNull() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new DeviceMonitoringService(null!, _mockScopeFactory.Object, CreateOptions()));
+            new DeviceMonitoringService(null!, _mockScopeFactory.Object, CreateOptions(), _mockHubContext.Object));
     }
 
     [Fact]
     public void Constructor_ThrowsArgumentNullException_WhenScopeFactoryIsNull() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new DeviceMonitoringService(NullLogger<DeviceMonitoringService>.Instance, null!, CreateOptions()));
+            new DeviceMonitoringService(NullLogger<DeviceMonitoringService>.Instance, null!, CreateOptions(), _mockHubContext.Object));
     }
 
     [Fact]
     public void Constructor_ThrowsArgumentNullException_WhenOptionsIsNull() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new DeviceMonitoringService(NullLogger<DeviceMonitoringService>.Instance, _mockScopeFactory.Object, null!));
+            new DeviceMonitoringService(NullLogger<DeviceMonitoringService>.Instance, _mockScopeFactory.Object, null!, _mockHubContext.Object));
     }
 
     #endregion
@@ -126,7 +142,7 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            CreateOptions());
+            CreateOptions(), _mockHubContext.Object);
 
         _mockAppDbService.Setup(s => s.GetAllPcDevicesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<PcDevice>());
@@ -145,7 +161,7 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            CreateOptions());
+            CreateOptions(), _mockHubContext.Object);
 
         var devices = new List<PcDevice> {
             new() {
@@ -175,7 +191,7 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            CreateOptions());
+            CreateOptions(), _mockHubContext.Object);
 
         var devices = new List<PcDevice> {
             new() {
@@ -208,7 +224,7 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            CreateOptions());
+            CreateOptions(), _mockHubContext.Object);
 
         // Use loopback address which should be reachable
         var devices = new List<PcDevice> {
@@ -242,7 +258,7 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            CreateOptions());
+            CreateOptions(), _mockHubContext.Object);
 
         // Use an unreachable private IP
         var devices = new List<PcDevice> {
@@ -273,7 +289,7 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            CreateOptions());
+            CreateOptions(), _mockHubContext.Object);
 
         var devices = new List<PcDevice> {
             new() {
@@ -315,7 +331,7 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            CreateOptions());
+            CreateOptions(), _mockHubContext.Object);
 
         var cts = new CancellationTokenSource();
 
@@ -338,7 +354,8 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            CreateOptions(enabled: false));
+            CreateOptions(enabled: false),
+            _mockHubContext.Object);
 
         _mockAppDbService.Setup(s => s.GetAllPcDevicesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<PcDevice>());
@@ -361,7 +378,8 @@ public class DeviceMonitoringServiceTests {
         var service = new DeviceMonitoringService(
             NullLogger<DeviceMonitoringService>.Instance,
             _mockScopeFactory.Object,
-            CreateOptions(enabled: true, intervalSeconds: 5)); // Minimum allowed
+            CreateOptions(enabled: true, intervalSeconds: 5),
+            _mockHubContext.Object); // Minimum allowed
 
         _mockAppDbService.Setup(s => s.GetAllPcDevicesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<PcDevice>());

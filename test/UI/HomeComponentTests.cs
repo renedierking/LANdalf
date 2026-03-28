@@ -4,7 +4,9 @@ using LANdalf.UI;
 using LANdalf.UI.ApiClient;
 using LANdalf.UI.Pages;
 using LANdalf.UI.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using MudBlazor.Services;
 using Xunit;
@@ -16,15 +18,27 @@ public class HomeComponentTests_Simplified : BunitContext {
     private readonly LANdalfApiService _mockApiService;
     private readonly Mock<IDeviceValidationService> _mockValidationService;
     private readonly ViewPreferenceService _viewPreferenceService;
+    private readonly DeviceStatusHubService _hubService;
 
     public HomeComponentTests_Simplified() {
         _mockApiClient = new Mock<LANdalfApiClient>(new System.Net.Http.HttpClient());
         _mockApiService = new LANdalfApiService(_mockApiClient.Object);
         _mockValidationService = new Mock<IDeviceValidationService>();
         _viewPreferenceService = new ViewPreferenceService();
+
+        // Create a minimal configuration for DeviceStatusHubService
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> {
+                {"ApiUrl", "http://localhost:5000"}
+            })
+            .Build();
+
+        _hubService = new DeviceStatusHubService(configuration, NullLogger<DeviceStatusHubService>.Instance);
+
         Services.AddScoped(_ => _mockApiService);
         Services.AddScoped<IDeviceValidationService>(_ => _mockValidationService.Object);
         Services.AddScoped(_ => _viewPreferenceService);
+        Services.AddSingleton(_ => _hubService);
         Services.AddMudServices();
 
         // Setup MudBlazor JSInterop to handle any call without specific setup

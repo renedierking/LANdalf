@@ -1,5 +1,6 @@
 ﻿using API.Data;
 using API.Handler;
+using API.Hubs;
 using API.MinimalApi;
 using API.Services;
 using Asp.Versioning;
@@ -48,6 +49,8 @@ namespace API {
                 builder.Services.AddSingleton<IDeviceMonitoringService, DeviceMonitoringService>();
                 builder.Services.AddHostedService(sp => (DeviceMonitoringService)sp.GetRequiredService<IDeviceMonitoringService>());
                 builder.Services.AddMinimalApiStrategies();
+
+                builder.Services.AddSignalR();
 
                 builder.Services.AddApiVersioning(options => {
                     options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -147,6 +150,8 @@ namespace API {
 
                 var minimalApiStrategies = app.Services.GetRequiredService<IEnumerable<IMinimalApiStrategy>>();
                 v1.MapMinimalApiStrategies(minimalApiStrategies);
+
+                app.MapHub<DeviceStatusHub>("/hubs/devicestatus");
 
                 Log.Information("LANdalf API started successfully");
                 app.Run();

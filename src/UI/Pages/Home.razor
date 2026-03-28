@@ -10,6 +10,7 @@
 @inject ViewPreferenceService ViewPreferenceService
 @inject IJSRuntime JsRuntime
 @inject ISnackbar Snackbar
+@inject DeviceStatusHubService HubService
 @implements IAsyncDisposable
 
 <PageTitle>LANdalf</PageTitle>
@@ -96,6 +97,11 @@
     protected override async Task OnInitializedAsync() {
         ViewPreferenceService.OnViewChanged += StateHasChanged;
         await ViewPreferenceService.LoadViewFromStorage(JsRuntime);
+
+        // Initialize SignalR connection and subscribe to device status changes
+        HubService.OnDeviceStatusChanged += HandleDeviceStatusChanged;
+        await HubService.StartAsync();
+
         await LoadData();
     }
 
@@ -217,7 +223,20 @@
         }
     }
 
+    private async Task HandleDeviceStatusChanged(PcDeviceDTO updatedDevice) {
+        // Update the device in the collection
+        var deviceList = devices.ToList();
+        var index = deviceList.FindIndex(d => d.Id == updatedDevice.Id);
+        if (index >= 0) {
+            deviceList[index] = updatedDevice;
+            devices = deviceList;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
     async ValueTask IAsyncDisposable.DisposeAsync() {
         ViewPreferenceService.OnViewChanged -= StateHasChanged;
+        HubService.OnDeviceStatusChanged -= HandleDeviceStatusChanged;
+        await HubService.StopAsync();
     }
 }
