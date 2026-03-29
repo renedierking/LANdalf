@@ -10,5 +10,6 @@ namespace API.Models {
         public IPAddress? BroadcastAddress { get; set; } = null;
         public bool IsOnline { get; set; }
         public DateTime? OnlineSince { get; set; }
+        public string? GroupName { get; set; }
     }
 }

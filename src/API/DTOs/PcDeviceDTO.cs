@@ -6,6 +6,7 @@
         string? IpAddress,
         string? BroadcastAddress,
         bool IsOnline,
-        DateTime? OnlineSince
+        DateTime? OnlineSince,
+        string? GroupName
     );
 }

@@ -210,6 +210,61 @@ public class DtoExtensionsTests {
         dto.Id.Should().Be(5);
     }
 
+    [Fact]
+    public void ToDto_MapsGroupName_WhenPresent() {
+        // Arrange
+        var pcDevice = new PcDevice {
+            Id = 1,
+            Name = "TestPC",
+            MacAddress = PhysicalAddress.Parse("00-11-22-33-44-55"),
+            GroupName = "Gaming"
+        };
+
+        // Act
+        var dto = pcDevice.ToDto();
+
+        // Assert
+        dto.GroupName.Should().Be("Gaming");
+    }
+
+    [Fact]
+    public void ToDto_MapsGroupName_WhenNull() {
+        // Arrange
+        var pcDevice = new PcDevice {
+            Id = 1,
+            Name = "TestPC",
+            MacAddress = PhysicalAddress.Parse("00-11-22-33-44-55"),
+            GroupName = null
+        };
+
+        // Act
+        var dto = pcDevice.ToDto();
+
+        // Assert
+        dto.GroupName.Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData("Gaming")]
+    [InlineData("Work")]
+    [InlineData("Media Server")]
+    [InlineData("Home Lab")]
+    public void ToDto_CorrectlyMapsDifferentGroupNames(string groupName) {
+        // Arrange
+        var pcDevice = new PcDevice {
+            Id = 1,
+            Name = "TestPC",
+            MacAddress = PhysicalAddress.Parse("00-11-22-33-44-55"),
+            GroupName = groupName
+        };
+
+        // Act
+        var dto = pcDevice.ToDto();
+
+        // Assert
+        dto.GroupName.Should().Be(groupName);
+    }
+
     #endregion
 }
 

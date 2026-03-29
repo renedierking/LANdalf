@@ -36,6 +36,12 @@
                           Validation="@(new Func<string?, string?>(ValidationService.ValidateIpAddress))"
                           Variant="Variant.Outlined" />
 
+            <MudTextField @bind-Value="Device.GroupName"
+                          Label="Group (optional)"
+                          Immediate="true"
+                          Variant="Variant.Outlined"
+                          HelperText="Organize devices into groups (e.g., Gaming, Work, Media Server)" />
+
         </MudStack>
     </DialogContent>
     <DialogActions>
