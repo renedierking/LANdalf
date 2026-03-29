@@ -27,6 +27,11 @@ LANdalf is a web-based Wake-on-LAN management platform built with .NET 10.0, Bla
 
 - **Device Management** — Add, edit, and organize network devices with MAC address storage
 - **Wake-on-LAN** — Send magic packets to wake sleeping devices remotely
+- **Real-time Device Monitoring** — Automatic background pinging tracks online/offline status with configurable intervals (default 30s)
+- **Live Status Updates** — SignalR WebSocket integration provides instant UI updates when device status changes (no manual refresh needed)
+- **Online Timestamp Tracking** — See when devices came online with user-friendly time display ("5 minutes ago", "2 hours ago")
+- **Card/Table view toggle** — Switch between a card view and a table view with persistent preference (saved to `localStorage`)
+- **Snackbar notifications** — Toast notifications for add, edit, delete, and WoL actions
 - **RESTful API** — Versioned API with OpenAPI documentation ([API Guide](docs/API_USAGE.md))
 - **Docker Ready** — One-command deployment, cross-platform (Windows, Linux, macOS)
 
@@ -110,10 +115,32 @@ docker compose build         # Docker images
 LANdalf uses a strategy pattern for Minimal API endpoint registration:
 
 - Implement `IMinimalApiStrategy` in the API project.
-- Register strategies through `AddMinimalApiStrategies()` (assembly scanning).
+- Register strategies through `AddMinimalApiStrategies()` (assembly scanning via `TryAddEnumerable` for idempotent registration).
 - Strategies are applied in `Program.cs` via `MapMinimalApiStrategies(...)`.
 
 This keeps `Program.cs` focused on composition and makes new endpoint groups plug-in friendly.
+
+### View preference persistence
+
+The `ViewPreferenceService` (in `src/UI/Services/`) stores the user's chosen view mode (card or table) in the browser's `localStorage` under the key `"view-preference"`. It is registered as a scoped service in `Program.cs` (UI) and injected into the `Home` page component.
+
+### Device monitoring configuration
+
+The `DeviceMonitoringService` (in `src/API/Services/`) runs as a background `IHostedService` that automatically pings devices to track their online/offline status. Configuration is managed through the IOptions pattern in `appsettings.json`:
+
+```json
+"DeviceMonitoring": {
+  "Enabled": true,
+  "IntervalSeconds": 30,
+  "TimeoutMilliseconds": 2000
+}
+```
+
+- **Enabled**: Toggle device monitoring on/off
+- **IntervalSeconds**: How often to ping devices (minimum 5 seconds)
+- **TimeoutMilliseconds**: Ping timeout threshold (minimum 100ms)
+
+Status changes are broadcast to connected clients via SignalR's `DeviceStatusHub`, enabling real-time UI updates without polling.
 
 See **[CONTRIBUTING.md](CONTRIBUTING.md)** for prerequisites, project structure, and development guidelines.
 
