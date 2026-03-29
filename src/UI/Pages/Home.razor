@@ -44,6 +44,7 @@
                          Bordered="true">
                 <Columns>
                     <PropertyColumn Property="x => x.Name" Title="Name" />
+                    <PropertyColumn Property="x => x.GroupName" Title="Group" />
                     <PropertyColumn Property="x => x.MacAddress" Title="MAC" />
                     <PropertyColumn Property="x => x.IpAddress" Title="IP" />
                     <PropertyColumn Property="x => x.BroadcastAddress" Title="Broadcast" />
@@ -81,16 +82,22 @@
             </MudDataGrid>
         } else {
             @if (devices.Any()) {
-                <MudGrid Spacing="3">
-                    @foreach (var device in devices) {
-                        <MudItem xs="12" sm="6" md="4">
-                            <DeviceCard Device="device"
-                                        OnStartClick="@(async () => await WakePcDevice(device))"
-                                        OnEditClick="@(() => ShowDeviceEditDialog(device))"
-                                        OnDeleteClick="@(async () => await DeleteDeviceAsync(device))" />
-                        </MudItem>
-                    }
-                </MudGrid>
+                var groupedDevices = devices.GroupBy(d => string.IsNullOrWhiteSpace(d.GroupName) ? "Ungrouped" : d.GroupName)
+                                            .OrderBy(g => g.Key == "Ungrouped" ? 1 : 0)
+                                            .ThenBy(g => g.Key);
+                @foreach (var group in groupedDevices) {
+                    <MudText Typo="Typo.h6" Class="mb-2 mt-4">@group.Key</MudText>
+                    <MudGrid Spacing="3">
+                        @foreach (var device in group) {
+                            <MudItem xs="12" sm="6" md="4">
+                                <DeviceCard Device="device"
+                                            OnStartClick="@(async () => await WakePcDevice(device))"
+                                            OnEditClick="@(() => ShowDeviceEditDialog(device))"
+                                            OnDeleteClick="@(async () => await DeleteDeviceAsync(device))" />
+                            </MudItem>
+                        }
+                    </MudGrid>
+                }
             } else {
                 <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
                     No devices found. Click "Add New Device" to get started.
@@ -189,7 +196,8 @@
             Name = editedDevice.Name,
             MacAddress = editedDevice.MacAddress,
             IpAddress = editedDevice.IpAddress,
-            BroadcastAddress = editedDevice.BroadcastAddress
+            BroadcastAddress = editedDevice.BroadcastAddress,
+            GroupName = editedDevice.GroupName
         };
         var resultAdd = await LANdalfApiService.AddPcDeviceAsync(createDTO, CancellationToken);
         if (resultAdd.IsSuccess) {

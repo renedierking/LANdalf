@@ -113,7 +113,7 @@ public class PcDeviceHandlerTests {
     [Fact]
     public async Task AddDevice_CreatesDevice_WithValidInput() {
         // Arrange
-        var dto = new PcCreateDto("TestPC", "00-11-22-33-44-55", "192.168.1.100", "192.168.1.255");
+        var dto = new PcCreateDto("TestPC", "00-11-22-33-44-55", "192.168.1.100", "192.168.1.255", null);
         var device = new PcDevice {
             Id = 1,
             Name = "TestPC",
@@ -137,7 +137,7 @@ public class PcDeviceHandlerTests {
     [Fact]
     public async Task AddDevice_ReturnsBadRequest_WithInvalidMacAddress() {
         // Arrange
-        var dto = new PcCreateDto("TestPC", "INVALID-MAC", "192.168.1.100", "192.168.1.255");
+        var dto = new PcCreateDto("TestPC", "INVALID-MAC", "192.168.1.100", "192.168.1.255", null);
 
         // Act
         var result = await _handler.AddDevice(dto, TestContext.Current.CancellationToken);
@@ -153,7 +153,7 @@ public class PcDeviceHandlerTests {
     [Fact]
     public async Task AddDevice_ReturnsBadRequest_WithInvalidIpAddress() {
         // Arrange
-        var dto = new PcCreateDto("TestPC", "00-11-22-33-44-55", "INVALID-IP", null);
+        var dto = new PcCreateDto("TestPC", "00-11-22-33-44-55", "INVALID-IP", null, null);
 
         // Act
         var result = await _handler.AddDevice(dto, TestContext.Current.CancellationToken);
@@ -169,7 +169,7 @@ public class PcDeviceHandlerTests {
     [Fact]
     public async Task AddDevice_ReturnsBadRequest_WithInvalidBroadcastAddress() {
         // Arrange
-        var dto = new PcCreateDto("TestPC", "00-11-22-33-44-55", "192.168.1.100", "INVALID-BROADCAST");
+        var dto = new PcCreateDto("TestPC", "00-11-22-33-44-55", "192.168.1.100", "INVALID-BROADCAST", null);
 
         // Act
         var result = await _handler.AddDevice(dto, TestContext.Current.CancellationToken);
@@ -185,13 +185,38 @@ public class PcDeviceHandlerTests {
     [Fact]
     public async Task AddDevice_CreatesDevice_WithNullOptionalAddresses() {
         // Arrange
-        var dto = new PcCreateDto("TestPC", "00-11-22-33-44-55", null, null);
+        var dto = new PcCreateDto("TestPC", "00-11-22-33-44-55", null, null, null);
         var device = new PcDevice {
             Id = 1,
             Name = "TestPC",
             MacAddress = PhysicalAddress.Parse("00-11-22-33-44-55"),
             IpAddress = null,
             BroadcastAddress = null
+        };
+
+        _mockAppDbService.Setup(s => s.CreatePcDeviceAsync(It.IsAny<PcDevice>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(device);
+
+        // Act
+        var result = await _handler.AddDevice(dto, TestContext.Current.CancellationToken);
+
+        // Assert
+        result.Should().NotBeNull();
+        var createdResult = result as Created;
+        createdResult?.StatusCode.Should().Be(201);
+    }
+
+    [Fact]
+    public async Task AddDevice_CreatesDevice_WithGroupName() {
+        // Arrange
+        var dto = new PcCreateDto("Gaming PC", "00-11-22-33-44-55", "192.168.1.100", "192.168.1.255", "Gaming");
+        var device = new PcDevice {
+            Id = 1,
+            Name = "Gaming PC",
+            MacAddress = PhysicalAddress.Parse("00-11-22-33-44-55"),
+            IpAddress = IPAddress.Parse("192.168.1.100"),
+            BroadcastAddress = IPAddress.Parse("192.168.1.255"),
+            GroupName = "Gaming"
         };
 
         _mockAppDbService.Setup(s => s.CreatePcDeviceAsync(It.IsAny<PcDevice>(), It.IsAny<CancellationToken>()))
@@ -235,7 +260,7 @@ public class PcDeviceHandlerTests {
         _mockAppDbService.Setup(s => s.UpdatePcDeviceAsync(It.IsAny<PcDevice>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(updatedDevice);
 
-        var dto = new PcDeviceDTO(1, "NewName", "AA-BB-CC-DD-EE-FF", "192.168.1.100", "192.168.1.255", false, null);
+        var dto = new PcDeviceDTO(1, "NewName", "AA-BB-CC-DD-EE-FF", "192.168.1.100", "192.168.1.255", false, null, null);
 
         // Act
         var result = await _handler.SetDevice(1, dto, TestContext.Current.CancellationToken);
@@ -252,7 +277,7 @@ public class PcDeviceHandlerTests {
         _mockAppDbService.Setup(s => s.GetPcDeviceByIdAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync((PcDevice?)null);
 
-        var dto = new PcDeviceDTO(999, "NewName", "00-11-22-33-44-55", null, null, false, null);
+        var dto = new PcDeviceDTO(999, "NewName", "00-11-22-33-44-55", null, null, false, null, null);
 
         // Act
         var result = await _handler.SetDevice(999, dto, TestContext.Current.CancellationToken);
@@ -276,7 +301,7 @@ public class PcDeviceHandlerTests {
         _mockAppDbService.Setup(s => s.GetPcDeviceByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(device);
 
-        var dto = new PcDeviceDTO(1, "TestPC", "INVALID-MAC", null, null, false, null);
+        var dto = new PcDeviceDTO(1, "TestPC", "INVALID-MAC", null, null, false, null, null);
 
         // Act
         var result = await _handler.SetDevice(1, dto, TestContext.Current.CancellationToken);

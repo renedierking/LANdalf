@@ -3,6 +3,7 @@
         string Name,
         string MacAddress,
         string? IpAddress,
-        string? BroadcastAddress
+        string? BroadcastAddress,
+        string? GroupName
     );
 }
