@@ -166,10 +166,10 @@ namespace API.Services {
                 var reply = await ping.SendPingAsync(ipAddress, _options.TimeoutMilliseconds);
                 return reply.Status == IPStatus.Success;
             } catch (PlatformNotSupportedException ex) {
-                _logger.LogError(ex, "Ping is not supported on this platform. Install 'iputils-ping' or grant CAP_NET_RAW capability.");
+                _logger.LogError(ex, "Ping is not supported on this platform or runtime.");
                 return false;
             } catch (PingException ex) {
-                _logger.LogDebug(ex, "Ping failed for {IpAddress}", ipAddress);
+                _logger.LogDebug(ex, "Ping failed for {IpAddress}. If running on Linux, ensure 'iputils-ping' is installed and the process has CAP_NET_RAW capability if required.", ipAddress);
                 return false;
             } catch (Exception ex) {
                 _logger.LogWarning(ex, "Unexpected error pinging {IpAddress}", ipAddress);
