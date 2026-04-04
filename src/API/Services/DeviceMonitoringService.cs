@@ -163,7 +163,13 @@ namespace API.Services {
         private async Task<bool> PingDeviceAsync(System.Net.IPAddress ipAddress, CancellationToken cancellationToken) {
             try {
                 using var ping = new Ping();
-                var reply = await ping.SendPingAsync(ipAddress, _options.TimeoutMilliseconds);
+                var reply = await ping.SendPingAsync(
+                    address: ipAddress,
+                    timeout: TimeSpan.FromMilliseconds(_options.TimeoutMilliseconds),
+                    buffer: null,
+                    options: null,
+                    cancellationToken: cancellationToken
+                );
                 return reply.Status == IPStatus.Success;
             } catch (PlatformNotSupportedException ex) {
                 _logger.LogError(ex, "Ping is not supported on this platform or runtime.");
