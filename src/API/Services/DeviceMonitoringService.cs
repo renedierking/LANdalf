@@ -11,7 +11,7 @@ namespace API.Services {
         private readonly DeviceMonitoringOptions _options;
         private readonly IHubContext<DeviceStatusHub> _hubContext;
 
-        private bool _platformNotSupportedLogged = false;
+        private int _platformNotSupportedLogged = 0;
 
         public bool IsEnabled => _options.Enabled;
         public int IntervalSeconds => _options.IntervalSeconds;
@@ -174,8 +174,7 @@ namespace API.Services {
                 );
                 return reply.Status == IPStatus.Success;
             } catch (PlatformNotSupportedException ex) {
-                if (!_platformNotSupportedLogged) {
-                    _platformNotSupportedLogged = true;
+                if (Interlocked.CompareExchange(ref _platformNotSupportedLogged, 1, 0) == 0) {
                     _logger.LogWarning(ex, "Ping is not supported on this platform or runtime.");
                 }
                 return false;
