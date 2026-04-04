@@ -11,6 +11,8 @@ namespace API.Services {
         private readonly DeviceMonitoringOptions _options;
         private readonly IHubContext<DeviceStatusHub> _hubContext;
 
+        private bool _platformNotSupportedLogged = false;
+
         public bool IsEnabled => _options.Enabled;
         public int IntervalSeconds => _options.IntervalSeconds;
         public int TimeoutMilliseconds => _options.TimeoutMilliseconds;
@@ -172,7 +174,10 @@ namespace API.Services {
                 );
                 return reply.Status == IPStatus.Success;
             } catch (PlatformNotSupportedException ex) {
-                _logger.LogError(ex, "Ping is not supported on this platform or runtime.");
+                if (!_platformNotSupportedLogged) {
+                    _platformNotSupportedLogged = true;
+                    _logger.LogWarning(ex, "Ping is not supported on this platform or runtime.");
+                }
                 return false;
             } catch (PingException ex) {
                 _logger.LogDebug(ex, "Ping failed for {IpAddress}. If running on Linux, ensure 'iputils-ping' is installed and the process has CAP_NET_RAW capability if required.", ipAddress);
