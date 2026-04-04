@@ -1,6 +1,4 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using System.Net.NetworkInformation;
 using Microsoft.AspNetCore.SignalR;
 using API.Hubs;
@@ -167,6 +165,9 @@ namespace API.Services {
                 using var ping = new Ping();
                 var reply = await ping.SendPingAsync(ipAddress, _options.TimeoutMilliseconds);
                 return reply.Status == IPStatus.Success;
+            } catch (PlatformNotSupportedException ex) {
+                _logger.LogError(ex, "Ping is not supported on this platform. Install 'iputils-ping' or grant CAP_NET_RAW capability.");
+                return false;
             } catch (PingException ex) {
                 _logger.LogDebug(ex, "Ping failed for {IpAddress}", ipAddress);
                 return false;

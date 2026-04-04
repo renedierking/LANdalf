@@ -28,8 +28,9 @@ FROM base AS final
 WORKDIR /app
 
 # Install gosu for privilege de-escalation in the entrypoint
+# and iputils-ping for ICMP ping support in DeviceMonitoringService
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gosu \
+    && apt-get install -y --no-install-recommends gosu iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
 # Create system user/group
