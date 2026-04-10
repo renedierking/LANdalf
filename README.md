@@ -26,6 +26,7 @@ LANdalf is a web-based Wake-on-LAN management platform built with .NET 10.0, Bla
 ## ✨ Features
 
 - **Device Management** — Add, edit, and organize network devices with MAC address storage
+- **Device Groups** — Organize devices into named categories (e.g., "Gaming", "Work", "Media Server") for better organization. Card view automatically groups devices, table view includes filterable group column
 - **Wake-on-LAN** — Send magic packets to wake sleeping devices remotely
 - **Real-time Device Monitoring** — Automatic background pinging tracks online/offline status with configurable intervals (default 30s)
 - **Live Status Updates** — SignalR WebSocket integration provides instant UI updates when device status changes (no manual refresh needed)
