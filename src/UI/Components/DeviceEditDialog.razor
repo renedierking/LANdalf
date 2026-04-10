@@ -90,10 +90,10 @@
 
     private void Cancel() => MudDialog.Cancel();
 
-    private async Task<IEnumerable<string>> SearchGroups(string? value, CancellationToken cancellationToken) {
+    private Task<IEnumerable<string>> SearchGroups(string? value, CancellationToken cancellationToken) {
         if (string.IsNullOrEmpty(value)) {
-            return _groups;// Array.Empty<string>();
+            return Task.FromResult<IEnumerable<string>>(_groups);
         }
-        return _groups.Where(g => g.Contains(value, StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult<IEnumerable<string>>(_groups.Where(g => g.Contains(value, StringComparison.OrdinalIgnoreCase)));
     }
 }
