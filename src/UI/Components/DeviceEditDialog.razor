@@ -79,7 +79,8 @@
         } else {
             _groups = devices.Value?
                 .Select(d => d.GroupName)
-                .Where(g => !string.IsNullOrEmpty(g))
+                .Where(g => !string.IsNullOrWhiteSpace(g))
+                .Select(g => g!.Trim())
                 .Distinct()
                 .ToArray()
                 ?? Array.Empty<string>();
