@@ -1,6 +1,7 @@
 @namespace LANdalf.UI.Components
 @using LANdalf.UI.ApiClient
 @using LANdalf.UI.Services
+@inject LANdalfApiService LANdalfApiService
 
 <MudDialog>
     <DialogContent>
@@ -36,19 +37,24 @@
                           Validation="@(new Func<string?, string?>(ValidationService.ValidateIpAddress))"
                           Variant="Variant.Outlined" />
 
-            <MudTextField @bind-Value="Device.GroupName"
-                          Label="Group (optional)"
-                          Immediate="true"
-                          Variant="Variant.Outlined"
-                          HelperText="Organize devices into groups (e.g., Gaming, Work, Media Server)" />
-
+            <MudAutocomplete @bind-Value="Device.GroupName"
+                             Label="Group (optional)"
+                             Immediate="true"
+                             Dense="true"
+                             Variant="Variant.Outlined"
+                             CoerceValue="true"
+                             CoerceText="true"
+                             ResetValueOnEmptyText="true"
+                             SelectValueOnTab="true"
+                             SearchFunc="@SearchGroups"
+                             HelperText="Organize devices into groups (e.g., Gaming, Work, Media Server)" />
         </MudStack>
     </DialogContent>
     <DialogActions>
-            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-4">
-                <MudButton OnClick="Cancel">Cancel</MudButton>
-                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Save</MudButton>
-            </MudStack>
+        <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-4">
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Save</MudButton>
+        </MudStack>
     </DialogActions>
 </MudDialog>
 
@@ -64,7 +70,30 @@
     [Parameter]
     public IDeviceValidationService ValidationService { get; set; } = null!;
 
+    private IEnumerable<string> _groups = Array.Empty<string>();
+
+    protected override async Task OnInitializedAsync() {
+        var devices = await LANdalfApiService.GetAllPcDevicesAsync(CancellationToken);
+        if (devices.IsError) {
+            _groups = Array.Empty<string>();
+        } else {
+            _groups = devices.Value?
+                .Select(d => d.GroupName)
+                .Where(g => !string.IsNullOrEmpty(g))
+                .Distinct()
+                .ToArray()
+                ?? Array.Empty<string>();
+        }
+    }
+
     private void Submit() => MudDialog.Close(DialogResult.Ok(Device));
 
     private void Cancel() => MudDialog.Cancel();
+
+    private async Task<IEnumerable<string>> SearchGroups(string? value, CancellationToken cancellationToken) {
+        if (string.IsNullOrEmpty(value)) {
+            return _groups;// Array.Empty<string>();
+        }
+        return _groups.Where(g => g.Contains(value, StringComparison.OrdinalIgnoreCase));
+    }
 }
