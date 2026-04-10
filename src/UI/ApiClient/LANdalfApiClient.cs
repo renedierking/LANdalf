@@ -683,6 +683,9 @@ namespace LANdalf.UI.ApiClient {
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string BroadcastAddress { get; set; }
 
+        [System.Text.Json.Serialization.JsonPropertyName("groupName")]
+        public string GroupName { get; set; }
+
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
         [System.Text.Json.Serialization.JsonExtensionData]
@@ -719,6 +722,12 @@ namespace LANdalf.UI.ApiClient {
 
         [System.Text.Json.Serialization.JsonPropertyName("isOnline")]
         public bool IsOnline { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("onlineSince")]
+        public System.DateTimeOffset? OnlineSince { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("groupName")]
+        public string GroupName { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 

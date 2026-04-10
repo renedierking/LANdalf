@@ -55,7 +55,8 @@ namespace API.Handler {
                 Name = dto.Name,
                 MacAddress = mac,
                 IpAddress = ip,
-                BroadcastAddress = broadcast
+                BroadcastAddress = broadcast,
+                GroupName = string.IsNullOrWhiteSpace(dto.GroupName) ? null : dto.GroupName.Trim()
             };
 
             var createdPc = await _appDbService.CreatePcDeviceAsync(pc, cancellationToken);
@@ -85,6 +86,7 @@ namespace API.Handler {
             pc.MacAddress = mac;
             pc.IpAddress = ip;
             pc.BroadcastAddress = broadcast;
+            pc.GroupName = string.IsNullOrWhiteSpace(dto.GroupName) ? null : dto.GroupName.Trim();
             await _appDbService.UpdatePcDeviceAsync(pc, cancellationToken);
 
             return Results.NoContent();

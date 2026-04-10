@@ -36,13 +36,24 @@
                           Validation="@(new Func<string?, string?>(ValidationService.ValidateIpAddress))"
                           Variant="Variant.Outlined" />
 
+            <MudAutocomplete @bind-Value="Device.GroupName"
+                             Label="Group (optional)"
+                             Immediate="true"
+                             Dense="true"
+                             Variant="Variant.Outlined"
+                             CoerceValue="true"
+                             CoerceText="true"
+                             ResetValueOnEmptyText="true"
+                             SelectValueOnTab="true"
+                             SearchFunc="@SearchGroups"
+                             HelperText="Organize devices into groups (e.g., Gaming, Work, Media Server)" />
         </MudStack>
     </DialogContent>
     <DialogActions>
-            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-4">
-                <MudButton OnClick="Cancel">Cancel</MudButton>
-                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Save</MudButton>
-            </MudStack>
+        <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-4">
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Save</MudButton>
+        </MudStack>
     </DialogActions>
 </MudDialog>
 
@@ -58,7 +69,28 @@
     [Parameter]
     public IDeviceValidationService ValidationService { get; set; } = null!;
 
+    [Parameter]
+    public IEnumerable<string>? GroupNames { get; set; }
+
+    private IEnumerable<string> _groups = Array.Empty<string>();
+
+    protected override void OnParametersSet() {
+        _groups = GroupNames?
+            .Where(g => !string.IsNullOrWhiteSpace(g))
+            .Select(g => g.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray()
+            ?? Array.Empty<string>();
+    }
+
     private void Submit() => MudDialog.Close(DialogResult.Ok(Device));
 
     private void Cancel() => MudDialog.Cancel();
+
+    private Task<IEnumerable<string>> SearchGroups(string? value, CancellationToken cancellationToken) {
+        if (string.IsNullOrEmpty(value)) {
+            return Task.FromResult<IEnumerable<string>>(_groups);
+        }
+        return Task.FromResult<IEnumerable<string>>(_groups.Where(g => g.Contains(value, StringComparison.OrdinalIgnoreCase)));
+    }
 }

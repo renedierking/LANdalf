@@ -10,7 +10,9 @@ namespace LANdalf.API.Extensions {
                 MacAddress: string.Join("-", pcDevice.MacAddress.GetAddressBytes().Select(b => b.ToString("X2"))),
                 IpAddress: pcDevice.IpAddress?.ToString(),
                 BroadcastAddress: pcDevice.BroadcastAddress?.ToString(),
-                IsOnline: pcDevice.IsOnline
+                IsOnline: pcDevice.IsOnline,
+                OnlineSince: pcDevice.OnlineSince,
+                GroupName: pcDevice.GroupName
             );
     }
 }
