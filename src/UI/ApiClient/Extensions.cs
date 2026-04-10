@@ -7,7 +7,9 @@
                 MacAddress = dTO.MacAddress,
                 IpAddress = dTO.IpAddress,
                 BroadcastAddress = dTO.BroadcastAddress,
-                IsOnline = dTO.IsOnline
+                IsOnline = dTO.IsOnline,
+                OnlineSince = dTO.OnlineSince,
+                GroupName = dTO.GroupName
             };
         }
     }

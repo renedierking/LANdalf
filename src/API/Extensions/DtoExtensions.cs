@@ -11,7 +11,8 @@ namespace LANdalf.API.Extensions {
                 IpAddress: pcDevice.IpAddress?.ToString(),
                 BroadcastAddress: pcDevice.BroadcastAddress?.ToString(),
                 IsOnline: pcDevice.IsOnline,
-                OnlineSince: pcDevice.OnlineSince
+                OnlineSince: pcDevice.OnlineSince,
+                GroupName: pcDevice.GroupName
             );
     }
 }

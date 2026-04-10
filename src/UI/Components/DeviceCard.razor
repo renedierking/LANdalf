@@ -3,7 +3,12 @@
 
 <MudCard Elevation="4" Class="rounded-4">
     <MudCardContent>
-        <MudText Typo="Typo.h5">@Device.Name</MudText>
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.h5">@Device.Name</MudText>
+            @if (!string.IsNullOrWhiteSpace(Device.GroupName)) {
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary">@Device.GroupName</MudChip>
+            }
+        </MudStack>
                 
         <MudStack Class="mt-3" Style="height: 70px" Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.Center">
             <MudFab Color="@(Device.IsOnline? Color.Success: Color.Error)"
