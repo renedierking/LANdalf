@@ -6,6 +6,7 @@ using System.Net.NetworkInformation;
 namespace API.Data {
     public class AppDbContext : DbContext {
         public DbSet<PcDevice> PcDevices => Set<PcDevice>();
+        public DbSet<WakeSchedule> WakeSchedules => Set<WakeSchedule>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) { }
@@ -30,6 +31,20 @@ namespace API.Data {
                 .HasConversion(
                     ip => ip != null ? ip.ToString() : null,               // DB: "192.168.1.255"
                     value => value != null ? IPAddress.Parse(value) : null // Domain
+                );
+
+            // Configure WakeSchedule
+            modelBuilder.Entity<WakeSchedule>()
+                .HasOne(ws => ws.PcDevice)
+                .WithMany()
+                .HasForeignKey(ws => ws.PcDeviceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<WakeSchedule>()
+                .Property(ws => ws.ScheduledTime)
+                .HasConversion(
+                    time => time.ToString("HH:mm"),              // DB: "07:30"
+                    value => TimeOnly.Parse(value)               // Domain
                 );
         }
     }
