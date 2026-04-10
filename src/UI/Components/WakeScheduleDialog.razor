@@ -1,0 +1,146 @@
+@using LANdalf.UI.Services
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudSelect @bind-Value="Schedule.PcDeviceId" Label="Device" Required="true" Disabled="IsEditMode">
+                @foreach (var device in Devices) {
+                    <MudSelectItem Value="@device.Id">@device.Name</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudTimePicker @bind-Time="ScheduledTime" Label="Wake Time (Local)" Required="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AccessTime" />
+
+            <MudText Typo="Typo.body2" Class="mt-2">Schedule Type</MudText>
+            <MudRadioGroup @bind-Value="ScheduleType">
+                <MudRadio Value="@("one-time")" Color="Color.Primary">One-time (runs once)</MudRadio>
+                <MudRadio Value="@("recurring")" Color="Color.Primary">Recurring (specific days)</MudRadio>
+            </MudRadioGroup>
+
+            @if (ScheduleType == "recurring") {
+                <MudText Typo="Typo.body2" Class="mt-2">Days of Week</MudText>
+                <MudStack Row="true" Spacing="2">
+                    <MudCheckBox @bind-Value="DaySunday" Label="Sun" Color="Color.Primary" />
+                    <MudCheckBox @bind-Value="DayMonday" Label="Mon" Color="Color.Primary" />
+                    <MudCheckBox @bind-Value="DayTuesday" Label="Tue" Color="Color.Primary" />
+                    <MudCheckBox @bind-Value="DayWednesday" Label="Wed" Color="Color.Primary" />
+                    <MudCheckBox @bind-Value="DayThursday" Label="Thu" Color="Color.Primary" />
+                    <MudCheckBox @bind-Value="DayFriday" Label="Fri" Color="Color.Primary" />
+                    <MudCheckBox @bind-Value="DaySaturday" Label="Sat" Color="Color.Primary" />
+                </MudStack>
+            }
+
+            <MudSwitch @bind-Value="Schedule.Enabled" Label="Enabled" Color="Color.Primary" />
+
+            @if (!string.IsNullOrEmpty(ValidationError)) {
+                <MudAlert Severity="Severity.Error">@ValidationError</MudAlert>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">@(IsEditMode ? "Update" : "Create")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public WakeScheduleCreateDto Schedule { get; set; } = default!;
+
+    [Parameter]
+    public List<LANdalf.UI.ApiClient.PcDeviceDTO> Devices { get; set; } = new();
+
+    [Parameter]
+    public bool IsEditMode { get; set; } = false;
+
+    private TimeSpan? ScheduledTime { get; set; }
+    private string ScheduleType { get; set; } = "one-time";
+    private string? ValidationError { get; set; }
+
+    // Day checkboxes
+    private bool DaySunday { get; set; }
+    private bool DayMonday { get; set; }
+    private bool DayTuesday { get; set; }
+    private bool DayWednesday { get; set; }
+    private bool DayThursday { get; set; }
+    private bool DayFriday { get; set; }
+    private bool DaySaturday { get; set; }
+
+    protected override void OnInitialized() {
+        // Parse existing schedule time
+        if (!string.IsNullOrEmpty(Schedule.ScheduledTime)) {
+            if (TimeOnly.TryParse(Schedule.ScheduledTime, out var time)) {
+                ScheduledTime = new TimeSpan(time.Hour, time.Minute, 0);
+            }
+        } else {
+            // Default to 8:00 AM
+            ScheduledTime = new TimeSpan(8, 0, 0);
+        }
+
+        // Parse existing days of week
+        if (!string.IsNullOrWhiteSpace(Schedule.DaysOfWeek)) {
+            ScheduleType = "recurring";
+            var days = Schedule.DaysOfWeek.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            foreach (var day in days) {
+                if (int.TryParse(day, out var dayNum)) {
+                    switch (dayNum) {
+                        case 0: DaySunday = true; break;
+                        case 1: DayMonday = true; break;
+                        case 2: DayTuesday = true; break;
+                        case 3: DayWednesday = true; break;
+                        case 4: DayThursday = true; break;
+                        case 5: DayFriday = true; break;
+                        case 6: DaySaturday = true; break;
+                    }
+                }
+            }
+        }
+    }
+
+    private void Submit() {
+        ValidationError = null;
+
+        // Validate time
+        if (!ScheduledTime.HasValue) {
+            ValidationError = "Please select a time";
+            return;
+        }
+
+        // Convert local time to UTC
+        var localTime = TimeOnly.FromTimeSpan(ScheduledTime.Value);
+        var localDateTime = DateTime.Today.Add(ScheduledTime.Value);
+        var utcDateTime = TimeZoneInfo.ConvertTimeToUtc(localDateTime, TimeZoneInfo.Local);
+        var utcTime = TimeOnly.FromDateTime(utcDateTime);
+
+        Schedule.ScheduledTime = utcTime.ToString("HH:mm");
+
+        // Build days of week string
+        if (ScheduleType == "recurring") {
+            var selectedDays = new List<int>();
+            if (DaySunday) selectedDays.Add(0);
+            if (DayMonday) selectedDays.Add(1);
+            if (DayTuesday) selectedDays.Add(2);
+            if (DayWednesday) selectedDays.Add(3);
+            if (DayThursday) selectedDays.Add(4);
+            if (DayFriday) selectedDays.Add(5);
+            if (DaySaturday) selectedDays.Add(6);
+
+            if (selectedDays.Count == 0) {
+                ValidationError = "Please select at least one day for recurring schedule";
+                return;
+            }
+
+            Schedule.DaysOfWeek = string.Join(",", selectedDays);
+        } else {
+            Schedule.DaysOfWeek = null;
+        }
+
+        MudDialog.Close(DialogResult.Ok(Schedule));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}
