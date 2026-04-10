@@ -1,6 +1,4 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using System.Net.NetworkInformation;
 using Microsoft.AspNetCore.SignalR;
 using API.Hubs;
@@ -12,6 +10,8 @@ namespace API.Services {
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly DeviceMonitoringOptions _options;
         private readonly IHubContext<DeviceStatusHub> _hubContext;
+
+        private int _platformNotSupportedLogged = 0;
 
         public bool IsEnabled => _options.Enabled;
         public int IntervalSeconds => _options.IntervalSeconds;
@@ -165,10 +165,21 @@ namespace API.Services {
         private async Task<bool> PingDeviceAsync(System.Net.IPAddress ipAddress, CancellationToken cancellationToken) {
             try {
                 using var ping = new Ping();
-                var reply = await ping.SendPingAsync(ipAddress, _options.TimeoutMilliseconds);
+                var reply = await ping.SendPingAsync(
+                    address: ipAddress,
+                    timeout: TimeSpan.FromMilliseconds(_options.TimeoutMilliseconds),
+                    buffer: null,
+                    options: null,
+                    cancellationToken: cancellationToken
+                );
                 return reply.Status == IPStatus.Success;
+            } catch (PlatformNotSupportedException ex) {
+                if (Interlocked.CompareExchange(ref _platformNotSupportedLogged, 1, 0) == 0) {
+                    _logger.LogWarning(ex, "Ping is not supported on this platform or runtime.");
+                }
+                return false;
             } catch (PingException ex) {
-                _logger.LogDebug(ex, "Ping failed for {IpAddress}", ipAddress);
+                _logger.LogDebug(ex, "Ping failed for {IpAddress}. If running on Linux, ensure 'iputils-ping' is installed and the process has CAP_NET_RAW capability if required.", ipAddress);
                 return false;
             } catch (Exception ex) {
                 _logger.LogWarning(ex, "Unexpected error pinging {IpAddress}", ipAddress);
