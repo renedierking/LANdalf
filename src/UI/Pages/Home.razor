@@ -162,7 +162,8 @@
 
         var parameters = new DialogParameters<DeviceEditDialog> {
             { x => x.Device, deviceToEdit },
-            { x => x.ValidationService, ValidationService }
+            { x => x.ValidationService, ValidationService },
+            { x => x.GroupNames, devices.Select(d => d.GroupName!).ToList() }
         };
 
         var options = new DialogOptions {

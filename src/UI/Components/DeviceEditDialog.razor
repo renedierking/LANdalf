@@ -1,7 +1,6 @@
 @namespace LANdalf.UI.Components
 @using LANdalf.UI.ApiClient
 @using LANdalf.UI.Services
-@inject LANdalfApiService LANdalfApiService
 
 <MudDialog>
     <DialogContent>
@@ -70,21 +69,18 @@
     [Parameter]
     public IDeviceValidationService ValidationService { get; set; } = null!;
 
+    [Parameter]
+    public IEnumerable<string>? GroupNames { get; set; }
+
     private IEnumerable<string> _groups = Array.Empty<string>();
 
-    protected override async Task OnInitializedAsync() {
-        var devices = await LANdalfApiService.GetAllPcDevicesAsync(CancellationToken);
-        if (devices.IsError) {
-            _groups = Array.Empty<string>();
-        } else {
-            _groups = devices.Value?
-                .Select(d => d.GroupName)
-                .Where(g => !string.IsNullOrWhiteSpace(g))
-                .Select(g => g!.Trim())
-                .Distinct()
-                .ToArray()
-                ?? Array.Empty<string>();
-        }
+    protected override void OnParametersSet() {
+        _groups = GroupNames?
+            .Where(g => !string.IsNullOrWhiteSpace(g))
+            .Select(g => g.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray()
+            ?? Array.Empty<string>();
     }
 
     private void Submit() => MudDialog.Close(DialogResult.Ok(Device));

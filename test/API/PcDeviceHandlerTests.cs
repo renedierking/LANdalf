@@ -219,7 +219,7 @@ public class PcDeviceHandlerTests {
             GroupName = "Gaming"
         };
 
-        _mockAppDbService.Setup(s => s.CreatePcDeviceAsync(It.IsAny<PcDevice>(), It.IsAny<CancellationToken>()))
+        _mockAppDbService.Setup(s => s.CreatePcDeviceAsync(It.Is<PcDevice>(d => d.GroupName == "Gaming"), It.IsAny<CancellationToken>()))
             .ReturnsAsync(device);
 
         // Act
@@ -229,6 +229,7 @@ public class PcDeviceHandlerTests {
         result.Should().NotBeNull();
         var createdResult = result as Created;
         createdResult?.StatusCode.Should().Be(201);
+        _mockAppDbService.Verify(s => s.CreatePcDeviceAsync(It.Is<PcDevice>(d => d.GroupName == "Gaming"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
