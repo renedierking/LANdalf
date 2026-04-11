@@ -111,6 +111,16 @@ namespace API.Services {
                     device.IsOnline = false;
                     device.OnlineSince = null;
                     await dbService.UpdatePcDeviceAsync(device, cancellationToken);
+
+                    // Log the event in history
+                    var deviceEvent = new Models.DeviceEvent {
+                        PcDeviceId = device.Id,
+                        EventType = "WentOffline",
+                        Timestamp = DateTime.UtcNow,
+                        Details = "No IP address configured"
+                    };
+                    await dbService.CreateDeviceEventAsync(deviceEvent, cancellationToken);
+
                     _logger.LogInformation("Device {Name} (ID={Id}) marked offline (no IP address)", device.Name, device.Id);
 
                     // Broadcast status change to connected clients via SignalR
@@ -141,6 +151,16 @@ namespace API.Services {
                 }
 
                 await dbService.UpdatePcDeviceAsync(device, cancellationToken);
+
+                // Log the event in history
+                var eventType = isOnline ? "CameOnline" : "WentOffline";
+                var deviceEvent = new Models.DeviceEvent {
+                    PcDeviceId = device.Id,
+                    EventType = eventType,
+                    Timestamp = DateTime.UtcNow,
+                    Details = null
+                };
+                await dbService.CreateDeviceEventAsync(deviceEvent, cancellationToken);
 
                 string status = isOnline ? "ONLINE" : "OFFLINE";
                 _logger.LogInformation(

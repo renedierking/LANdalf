@@ -1,0 +1,164 @@
+@using LANdalf.UI.ApiClient
+@using LANdalf.UI.Services
+@inject LANdalfApiService LANdalfApiService
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.History" Class="mr-2" />
+            Device History - @DeviceName
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (IsLoading) {
+            <MudProgressLinear Indeterminate="true" Class="my-4" />
+            <MudText Typo="Typo.body2" Align="Align.Center">Loading history...</MudText>
+        } else if (Events == null || !Events.Any()) {
+            <MudAlert Severity="Severity.Info">No events recorded yet</MudAlert>
+        } else {
+            <MudTimeline TimelinePosition="TimelinePosition.Start" TimelineOrientation="TimelineOrientation.Vertical">
+                @foreach (var evt in Events) {
+                    var icon = evt.EventType switch {
+                        "WakeCommandSent" => Icons.Material.Filled.PowerSettingsNew,
+                        "CameOnline" => Icons.Material.Filled.CheckCircle,
+                        "WentOffline" => Icons.Material.Filled.Cancel,
+                        _ => Icons.Material.Filled.Circle
+                    };
+
+                    var color = evt.EventType switch {
+                        "WakeCommandSent" => Color.Primary,
+                        "CameOnline" => Color.Success,
+                        "WentOffline" => Color.Error,
+                        _ => Color.Default
+                    };
+
+                    <MudTimelineItem Color="@color" Size="Size.Small">
+                        <ItemOpposite>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                @FormatTimestamp(evt.Timestamp)
+                            </MudText>
+                        </ItemOpposite>
+                        <ItemContent>
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.body1">
+                                    <MudIcon Icon="@icon" Size="Size.Small" Class="mr-1" />
+                                    @FormatEventType(evt.EventType)
+                                </MudText>
+                                @if (!string.IsNullOrWhiteSpace(evt.Details)) {
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">@evt.Details</MudText>
+                                }
+                            </MudStack>
+                        </ItemContent>
+                    </MudTimelineItem>
+                }
+            </MudTimeline>
+
+            @if (HasMore) {
+                <MudStack Row="true" Justify="Justify.Center" Class="mt-4">
+                    <MudButton Variant="Variant.Outlined"
+                               OnClick="LoadMoreEvents"
+                               Disabled="IsLoadingMore">
+                        @if (IsLoadingMore) {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                            <span>Loading...</span>
+                        } else {
+                            <span>Load More</span>
+                        }
+                    </MudButton>
+                </MudStack>
+            }
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public int DeviceId { get; set; }
+
+    [Parameter]
+    public string DeviceName { get; set; } = "";
+
+    private List<DeviceEventDTO>? Events { get; set; }
+    private bool IsLoading { get; set; } = true;
+    private bool IsLoadingMore { get; set; } = false;
+    private bool HasMore { get; set; } = true;
+    private int Offset { get; set; } = 0;
+    private const int PageSize = 20;
+
+    protected override async Task OnInitializedAsync() {
+        await LoadEvents();
+    }
+
+    private async Task LoadEvents() {
+        IsLoading = true;
+        try {
+            var result = await LANdalfApiService.GetDeviceHistoryAsync(DeviceId, PageSize, 0);
+            if (result.IsSuccess && result.Value != null) {
+                Events = result.Value.ToList();
+                HasMore = Events.Count >= PageSize;
+                Offset = Events.Count;
+            } else {
+                Events = new List<DeviceEventDTO>();
+                HasMore = false;
+            }
+        } catch {
+            Events = new List<DeviceEventDTO>();
+            HasMore = false;
+        } finally {
+            IsLoading = false;
+        }
+    }
+
+    private async Task LoadMoreEvents() {
+        IsLoadingMore = true;
+        try {
+            var result = await LANdalfApiService.GetDeviceHistoryAsync(DeviceId, PageSize, Offset);
+            if (result.IsSuccess && result.Value != null && result.Value.Any()) {
+                Events ??= new List<DeviceEventDTO>();
+                Events.AddRange(result.Value);
+                HasMore = result.Value.Count() >= PageSize;
+                Offset += result.Value.Count();
+            } else {
+                HasMore = false;
+            }
+        } catch {
+            HasMore = false;
+        } finally {
+            IsLoadingMore = false;
+        }
+    }
+
+    private string FormatEventType(string eventType) {
+        return eventType switch {
+            "WakeCommandSent" => "Wake Command Sent",
+            "CameOnline" => "Came Online",
+            "WentOffline" => "Went Offline",
+            _ => eventType
+        };
+    }
+
+    private string FormatTimestamp(DateTime timestamp) {
+        var local = timestamp.ToLocalTime();
+        var now = DateTime.Now;
+        var diff = now - local;
+
+        if (diff.TotalMinutes < 1)
+            return "Just now";
+        if (diff.TotalMinutes < 60)
+            return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24)
+            return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7)
+            return $"{(int)diff.TotalDays}d ago";
+
+        return local.ToString("MMM d, yyyy h:mm tt");
+    }
+
+    private void Close() => MudDialog.Cancel();
+}

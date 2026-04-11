@@ -28,5 +28,15 @@ namespace LANdalf.API.Extensions {
                 NextExecution: schedule.NextExecution,
                 CronExpression: schedule.CronExpression
             );
+
+        public static DeviceEventDTO ToDto(this DeviceEvent deviceEvent) =>
+            new DeviceEventDTO(
+                Id: deviceEvent.Id,
+                PcDeviceId: deviceEvent.PcDeviceId,
+                PcDeviceName: deviceEvent.PcDevice?.Name ?? "",
+                EventType: deviceEvent.EventType,
+                Timestamp: deviceEvent.Timestamp,
+                Details: deviceEvent.Details
+            );
     }
 }

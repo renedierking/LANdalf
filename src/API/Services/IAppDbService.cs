@@ -58,6 +58,31 @@ namespace API.Services {
         Task<bool> DeleteWakeScheduleAsync(int id, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Gets all device events from the database
+        /// </summary>
+        Task<IEnumerable<DeviceEvent>> GetAllDeviceEventsAsync(CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets device events for a specific device with pagination
+        /// </summary>
+        Task<IEnumerable<DeviceEvent>> GetDeviceEventsByDeviceIdAsync(int deviceId, int limit = 50, int offset = 0, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets a device event by its ID
+        /// </summary>
+        Task<DeviceEvent?> GetDeviceEventByIdAsync(int id, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Creates a new device event
+        /// </summary>
+        Task<DeviceEvent> CreateDeviceEventAsync(DeviceEvent deviceEvent, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Deletes a device event by its ID
+        /// </summary>
+        Task<bool> DeleteDeviceEventAsync(int id, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Saves all pending changes to the database
         /// </summary>
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

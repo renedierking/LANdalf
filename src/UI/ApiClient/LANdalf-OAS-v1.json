@@ -6,10 +6,188 @@
   },
   "servers": [
     {
-      "url": "https://localhost:7206/"
+      "url": "http://localhost:5215/"
     }
   ],
   "paths": {
+    "/api/v1/device-events": {
+      "get": {
+        "tags": [
+          "LANdalf-api"
+        ],
+        "summary": "Get all device events.",
+        "description": "Returns an array of all device events ordered by timestamp (newest first).",
+        "operationId": "GetAllDeviceEvents",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceEventDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pc-devices/{deviceId}/history": {
+      "get": {
+        "tags": [
+          "LANdalf-api"
+        ],
+        "summary": "Get event history for a specific device.",
+        "description": "Returns paginated event history for the specified device, ordered by timestamp (newest first).",
+        "operationId": "GetDeviceHistory",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceEventDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/device-events/{id}": {
+      "get": {
+        "tags": [
+          "LANdalf-api"
+        ],
+        "summary": "Get a specific device event.",
+        "description": "Returns a device event by ID.",
+        "operationId": "GetDeviceEventById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceEventDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/device-events/{id}/delete": {
+      "post": {
+        "tags": [
+          "LANdalf-api"
+        ],
+        "summary": "Deletes a device event.",
+        "description": "Deletes the specified device event.",
+        "operationId": "DeleteDeviceEvent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/pc-devices": {
       "get": {
         "tags": [
@@ -40,7 +218,7 @@
         "tags": [
           "LANdalf-api"
         ],
-        "summary": "Get a specific PcDevices.",
+        "summary": "Get a specific PcDevice.",
         "description": "Returns a PcDevice.",
         "operationId": "GetPcDeviceById",
         "parameters": [
@@ -154,8 +332,8 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -164,8 +342,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -222,9 +400,306 @@
         "tags": [
           "LANdalf-api"
         ],
-        "summary": "Wakes an PcDevice.",
-        "description": "Returns a Ok-Result.",
+        "summary": "Wakes a PcDevice.",
+        "description": "Returns an Ok-Result.",
         "operationId": "WakePcDevice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/wake-schedules": {
+      "get": {
+        "tags": [
+          "LANdalf-api"
+        ],
+        "summary": "Get all wake schedules.",
+        "description": "Returns an array of wake schedules for all devices.",
+        "operationId": "GetAllWakeSchedules",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WakeScheduleDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pc-devices/{deviceId}/wake-schedules": {
+      "get": {
+        "tags": [
+          "LANdalf-api"
+        ],
+        "summary": "Get wake schedules for a specific device.",
+        "description": "Returns an array of wake schedules for the specified device.",
+        "operationId": "GetWakeSchedulesByDevice",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WakeScheduleDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/wake-schedules/{id}": {
+      "get": {
+        "tags": [
+          "LANdalf-api"
+        ],
+        "summary": "Get a specific wake schedule.",
+        "description": "Returns a wake schedule by ID.",
+        "operationId": "GetWakeScheduleById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WakeScheduleDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/wake-schedules/add": {
+      "post": {
+        "tags": [
+          "LANdalf-api"
+        ],
+        "summary": "Add a new wake schedule.",
+        "description": "Creates a new wake schedule for a device.",
+        "operationId": "AddWakeSchedule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WakeScheduleCreateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/wake-schedules/{id}/set": {
+      "post": {
+        "tags": [
+          "LANdalf-api"
+        ],
+        "summary": "Updates an existing wake schedule.",
+        "description": "Updates the specified wake schedule.",
+        "operationId": "UpdateWakeSchedule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WakeScheduleCreateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/wake-schedules/{id}/delete": {
+      "post": {
+        "tags": [
+          "LANdalf-api"
+        ],
+        "summary": "Deletes a wake schedule.",
+        "description": "Deletes the specified wake schedule.",
+        "operationId": "DeleteWakeSchedule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/wake-schedules/{id}/toggle": {
+      "post": {
+        "tags": [
+          "LANdalf-api"
+        ],
+        "summary": "Toggle a wake schedule's enabled state.",
+        "description": "Enables or disables the specified wake schedule.",
+        "operationId": "ToggleWakeSchedule",
         "parameters": [
           {
             "name": "id",
@@ -260,12 +735,58 @@
   },
   "components": {
     "schemas": {
+      "DeviceEventDTO": {
+        "required": [
+          "id",
+          "pcDeviceId",
+          "pcDeviceName",
+          "eventType",
+          "timestamp",
+          "details"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pcDeviceId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pcDeviceName": {
+            "type": "string"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "details": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "PcCreateDto": {
         "required": [
           "name",
           "macAddress",
           "ipAddress",
-          "broadcastAddress"
+          "broadcastAddress",
+          "groupName"
         ],
         "type": "object",
         "properties": {
@@ -286,6 +807,12 @@
               "null",
               "string"
             ]
+          },
+          "groupName": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -296,7 +823,9 @@
           "macAddress",
           "ipAddress",
           "broadcastAddress",
-          "isOnline"
+          "isOnline",
+          "onlineSince",
+          "groupName"
         ],
         "type": "object",
         "properties": {
@@ -328,6 +857,19 @@
           },
           "isOnline": {
             "type": "boolean"
+          },
+          "onlineSince": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "groupName": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -366,6 +908,101 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "WakeScheduleCreateDto": {
+        "required": [
+          "pcDeviceId",
+          "scheduledTime",
+          "daysOfWeek",
+          "enabled"
+        ],
+        "type": "object",
+        "properties": {
+          "pcDeviceId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "scheduledTime": {
+            "type": "string"
+          },
+          "daysOfWeek": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "WakeScheduleDTO": {
+        "required": [
+          "id",
+          "pcDeviceId",
+          "pcDeviceName",
+          "scheduledTime",
+          "daysOfWeek",
+          "enabled",
+          "lastExecuted",
+          "nextExecution",
+          "cronExpression"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pcDeviceId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pcDeviceName": {
+            "type": "string"
+          },
+          "scheduledTime": {
+            "type": "string"
+          },
+          "daysOfWeek": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "lastExecuted": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "nextExecution": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "cronExpression": {
+            "type": "string"
           }
         }
       }

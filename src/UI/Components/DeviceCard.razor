@@ -49,6 +49,10 @@
             }
             <MudSpacer />
             <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End">
+                <MudIconButton Icon="@Icons.Material.Outlined.History"
+                               Size="Size.Small"
+                               OnClick="@(() => OnHistoryClick.InvokeAsync())"
+                               aria-label="@($"View history for {Device.Name}")" />
                 <MudIconButton Icon="@Icons.Material.Outlined.Edit"
                                Size="Size.Small"
                                OnClick="@(() => OnEditClick.InvokeAsync())"
@@ -68,6 +72,9 @@
 
     [Parameter]
     public EventCallback OnStartClick { get; set; }
+
+    [Parameter]
+    public EventCallback OnHistoryClick { get; set; }
 
     [Parameter]
     public EventCallback OnEditClick { get; set; }
