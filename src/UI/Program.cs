@@ -37,6 +37,8 @@ namespace LANdalf.UI {
             builder.Services.AddScoped(sp => new LANdalfApiClient(sp.GetRequiredService<HttpClient>()));
 
             builder.Services.AddScoped<LANdalfApiService>();
+            builder.Services.AddScoped<IWakeScheduleApiService, WakeScheduleApiService>(sp =>
+                new WakeScheduleApiService(sp.GetRequiredService<HttpClient>()));
             builder.Services.AddScoped<IDeviceValidationService, DeviceValidationService>();
             builder.Services.AddSingleton<DeviceStatusHubService>();
 

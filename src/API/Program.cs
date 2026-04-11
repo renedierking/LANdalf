@@ -42,12 +42,17 @@ namespace API {
 
                 builder.Services.Configure<DeviceMonitoringOptions>(
                     builder.Configuration.GetSection(DeviceMonitoringOptions.SectionName));
+                builder.Services.Configure<WakeScheduleOptions>(
+                    builder.Configuration.GetSection(WakeScheduleOptions.SectionName));
 
                 builder.Services.AddScoped<IAppDbService, AppDbService>();
                 builder.Services.AddScoped<WakeOnLanService>();
                 builder.Services.AddScoped<PcDeviceHandler>();
+                builder.Services.AddScoped<WakeScheduleHandler>();
                 builder.Services.AddSingleton<IDeviceMonitoringService, DeviceMonitoringService>();
                 builder.Services.AddHostedService(sp => (DeviceMonitoringService)sp.GetRequiredService<IDeviceMonitoringService>());
+                builder.Services.AddSingleton<IWakeScheduleService, WakeScheduleService>();
+                builder.Services.AddHostedService(sp => (WakeScheduleService)sp.GetRequiredService<IWakeScheduleService>());
                 builder.Services.AddMinimalApiStrategies();
 
                 builder.Services.AddSignalR();

@@ -1,0 +1,259 @@
+@page "/schedules"
+@namespace LANdalf.UI.Pages
+@using LANdalf.UI.ApiClient
+@using LANdalf.UI.Services
+@using LANdalf.UI.Components
+@inject IWakeScheduleApiService ScheduleService
+@inject LANdalfApiService DeviceService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Wake Schedules - LANdalf</PageTitle>
+
+<MudStack Spacing="3">
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
+        <MudText Typo="Typo.h6">Wake Schedules</MudText>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="ShowAddScheduleDialog">
+            Add Schedule
+        </MudButton>
+    </MudStack>
+
+    @if (isLoading) {
+        <MudStack Class="mt-5" Justify="Justify.Center" AlignItems="AlignItems.Center">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        </MudStack>
+    } else if (schedules.Count == 0) {
+        <MudAlert Severity="Severity.Info">No schedules configured yet. Create one to automatically wake devices at specific times.</MudAlert>
+    } else {
+        <MudDataGrid Items="schedules"
+                     Filterable="true"
+                     Dense="true"
+                     ReadOnly="true"
+                     Hover="true"
+                     Bordered="true">
+            <Columns>
+                <PropertyColumn Property="x => x.PcDeviceName" Title="Device" />
+                <TemplateColumn Title="Schedule Time">
+                    <CellTemplate>
+                        @FormatScheduleTime(context.Item.ScheduledTime)
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="Days">
+                    <CellTemplate>
+                        @FormatDaysOfWeek(context.Item.DaysOfWeek)
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="Next Run">
+                    <CellTemplate>
+                        @if (context.Item.NextExecution.HasValue) {
+                            <span>@context.Item.NextExecution.Value.LocalDateTime.ToString("ddd, MMM d 'at' h:mm tt")</span>
+                        } else {
+                            <span>-</span>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="Last Run">
+                    <CellTemplate>
+                        @if (context.Item.LastExecuted.HasValue) {
+                            <span>@context.Item.LastExecuted.Value.LocalDateTime.ToString("MMM d, h:mm tt")</span>
+                        } else {
+                            <span>Never</span>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="Status">
+                    <CellTemplate>
+                        <MudSwitch Value="@context.Item.Enabled"
+                                   Color="Color.Success"
+                                   UnCheckedColor="Color.Default"
+                                   ValueChanged="@((bool val) => ToggleSchedule(context.Item))" />
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn CellStyle="width: 150px">
+                    <CellTemplate>
+                        <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit"
+                                       OnClick="@(() => ShowEditScheduleDialog(context.Item))" />
+                        <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete"
+                                       OnClick="@(() => DeleteScheduleAsync(context.Item))" />
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+        </MudDataGrid>
+    }
+</MudStack>
+
+@code {
+    private List<WakeScheduleDTO> schedules = new();
+    private List<PcDeviceDTO> devices = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync() {
+        await LoadData();
+    }
+
+    private async Task LoadData() {
+        isLoading = true;
+
+        var schedulesResult = await ScheduleService.GetAllWakeSchedulesAsync();
+        if (schedulesResult.IsSuccess) {
+            schedules = schedulesResult.Value!.ToList();
+        } else {
+            Snackbar.Add($"Failed to load schedules: {schedulesResult.Error!.Message}", Severity.Error);
+        }
+
+        var devicesResult = await DeviceService.GetAllPcDevicesAsync();
+        if (devicesResult.IsSuccess) {
+            devices = devicesResult.Value!.ToList();
+        }
+
+        isLoading = false;
+    }
+
+    private async Task ShowAddScheduleDialog() {
+        var newSchedule = new WakeScheduleCreateDto {
+            PcDeviceId = devices.FirstOrDefault()?.Id ?? 0,
+            ScheduledTime = "08:00",
+            DaysOfWeek = null,
+            Enabled = true
+        };
+
+        var parameters = new DialogParameters<WakeScheduleDialog> {
+            { x => x.Schedule, newSchedule },
+            { x => x.Devices, devices },
+            { x => x.IsEditMode, false }
+        };
+
+        var options = new DialogOptions {
+            BackdropClick = false,
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<WakeScheduleDialog>("Add Wake Schedule", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled) {
+            var scheduleDto = await dialog.GetReturnValueAsync<WakeScheduleCreateDto>();
+            if (scheduleDto is not null) {
+                var addResult = await ScheduleService.AddWakeScheduleAsync(scheduleDto);
+                if (addResult.IsSuccess) {
+                    Snackbar.Add("Schedule created successfully", Severity.Success);
+                    await LoadData();
+                } else {
+                    Snackbar.Add($"Failed to create schedule: {addResult.Error!.Message}", Severity.Error);
+                }
+            }
+        }
+    }
+
+    private async Task ShowEditScheduleDialog(WakeScheduleDTO schedule) {
+        // Convert UTC time to local time for display in the dialog
+        var localTime = schedule.ScheduledTime;
+        if (TimeOnly.TryParse(schedule.ScheduledTime, out var utcTime)) {
+            var utcDateTime = DateTime.UtcNow.Date.Add(utcTime.ToTimeSpan());
+            var localDateTime = utcDateTime.ToLocalTime();
+            localTime = TimeOnly.FromDateTime(localDateTime).ToString("HH:mm");
+        }
+
+        // Convert the existing schedule to edit DTO
+        var editSchedule = new WakeScheduleCreateDto {
+            PcDeviceId = schedule.PcDeviceId,
+            ScheduledTime = localTime,
+            DaysOfWeek = schedule.DaysOfWeek,
+            Enabled = schedule.Enabled
+        };
+
+        var parameters = new DialogParameters<WakeScheduleDialog> {
+            { x => x.Schedule, editSchedule },
+            { x => x.Devices, devices },
+            { x => x.IsEditMode, true }
+        };
+
+        var options = new DialogOptions {
+            BackdropClick = false,
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<WakeScheduleDialog>("Edit Wake Schedule", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled) {
+            var scheduleDto = await dialog.GetReturnValueAsync<WakeScheduleCreateDto>();
+            if (scheduleDto is not null) {
+                var updateResult = await ScheduleService.UpdateWakeScheduleAsync(schedule.Id, scheduleDto);
+                if (updateResult.IsSuccess) {
+                    Snackbar.Add("Schedule updated successfully", Severity.Success);
+                    await LoadData();
+                } else {
+                    Snackbar.Add($"Failed to update schedule: {updateResult.Error!.Message}", Severity.Error);
+                }
+            }
+        }
+    }
+
+    private async Task ToggleSchedule(WakeScheduleDTO schedule) {
+        var result = await ScheduleService.ToggleWakeScheduleAsync(schedule.Id);
+        if (result.IsSuccess) {
+            Snackbar.Add($"Schedule {(schedule.Enabled ? "enabled" : "disabled")}", Severity.Success);
+            await LoadData();
+        } else {
+            Snackbar.Add($"Failed to toggle schedule: {result.Error!.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeleteScheduleAsync(WakeScheduleDTO schedule) {
+        var confirm = await DialogService.ShowMessageBoxAsync(
+            "Delete Schedule",
+            $"Are you sure you want to delete the wake schedule for {schedule.PcDeviceName}?",
+            yesText: "Delete", cancelText: "Cancel");
+
+        if (confirm == true) {
+            var result = await ScheduleService.DeleteWakeScheduleAsync(schedule.Id);
+            if (result.IsSuccess) {
+                Snackbar.Add("Schedule deleted successfully", Severity.Success);
+                await LoadData();
+            } else {
+                Snackbar.Add($"Failed to delete schedule: {result.Error!.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private string FormatScheduleTime(string timeString) {
+        if (TimeOnly.TryParse(timeString, out var utcTime)) {
+            // Convert UTC to local time
+            var utcDateTime = DateTime.UtcNow.Date.Add(utcTime.ToTimeSpan());
+            var localDateTime = utcDateTime.ToLocalTime();
+            return localDateTime.ToString("h:mm tt");
+        }
+        return timeString;
+    }
+
+    private string FormatDaysOfWeek(string? daysOfWeek) {
+        if (string.IsNullOrWhiteSpace(daysOfWeek)) {
+            return "One-time";
+        }
+
+        var days = daysOfWeek.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var dayNames = new List<string>();
+
+        foreach (var day in days) {
+            if (int.TryParse(day, out var dayNum)) {
+                dayNames.Add(dayNum switch {
+                    0 => "Sun",
+                    1 => "Mon",
+                    2 => "Tue",
+                    3 => "Wed",
+                    4 => "Thu",
+                    5 => "Fri",
+                    6 => "Sat",
+                    _ => day
+                });
+            }
+        }
+
+        return dayNames.Count > 0 ? string.Join(", ", dayNames) : "Invalid";
+    }
+}

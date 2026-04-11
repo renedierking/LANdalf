@@ -3,6 +3,7 @@
 @implements IAsyncDisposable
 @inject ThemeService ThemeService
 @inject IJSRuntime JsRuntime
+@inject NavigationManager NavigationManager
 
 @* Required *@
 <MudThemeProvider @bind-IsDarkMode="isDarkMode" Theme="ThemeService.GetCurrentTheme()" />
@@ -18,6 +19,8 @@
     <MudAppBar>
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="w-100">
             <MudText Typo="Typo.h6">LANdalf</MudText>
+            <MudButton Variant="Variant.Text" Color="Color.Inherit" Class="ms-3" Href="/">Devices</MudButton>
+            <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/schedules">Schedules</MudButton>
             <MudSpacer />
             <MudIconButton Icon="@(isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
                            Color="Color.Inherit"
@@ -32,7 +35,7 @@
         </MudContainer>
     </MudMainContent>
 
-    <MudAppBar Bottom="true" Fixed="true" Style="top: auto; bottom: 0;">
+    <MudAppBar Bottom="true" Fixed="true" Dense="true" Style="top: auto; bottom: 0;">
         <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="3" Class="w-100">
             <MudText Typo="Typo.caption" Color="Color.Default" Class="mt-1">@($"LANdalf v{typeof(Program).Assembly.GetName().Version?.ToString(3)}")</MudText>
             <MudLink Href="https://github.com/renedierking/LANdalf" Target="_blank" Typo="Typo.caption">
