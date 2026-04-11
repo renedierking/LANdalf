@@ -19,7 +19,9 @@
     </MudStack>
 
     @if (isLoading) {
-        <MudProgressCircular Indeterminate="true" />
+        <MudStack Class="mt-5" Justify="Justify.Center" AlignItems="AlignItems.Center">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        </MudStack>
     } else if (schedules.Count == 0) {
         <MudAlert Severity="Severity.Info">No schedules configured yet. Create one to automatically wake devices at specific times.</MudAlert>
     } else {
