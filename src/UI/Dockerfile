@@ -1,6 +1,7 @@
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ENV DOTNET_EnableWriteXorExecute=0
+ARG VERSION=0.0.0
 WORKDIR /src
 
 # Copy the project file (when building from src/UI as build context)
@@ -9,7 +10,7 @@ RUN dotnet restore "./UI.csproj"
 
 # Copy everything and publish
 COPY . .
-RUN dotnet publish "./UI.csproj" -c Release -o /app/publish
+RUN dotnet publish "./UI.csproj" -c Release -o /app/publish /p:Version=$VERSION
 
 # Runtime stage - nginx
 FROM nginx:alpine AS runtime
