@@ -7,6 +7,7 @@ namespace API.Data {
     public class AppDbContext : DbContext {
         public DbSet<PcDevice> PcDevices => Set<PcDevice>();
         public DbSet<WakeSchedule> WakeSchedules => Set<WakeSchedule>();
+        public DbSet<DeviceEvent> DeviceEvents => Set<DeviceEvent>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) { }
@@ -46,6 +47,16 @@ namespace API.Data {
                     time => time.ToString("HH:mm"),              // DB: "07:30"
                     value => TimeOnly.Parse(value)               // Domain
                 );
+
+            // Configure DeviceEvent
+            modelBuilder.Entity<DeviceEvent>()
+                .HasOne(de => de.PcDevice)
+                .WithMany()
+                .HasForeignKey(de => de.PcDeviceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DeviceEvent>()
+                .HasIndex(de => new { de.PcDeviceId, de.Timestamp });
         }
     }
 }

@@ -95,6 +95,49 @@ namespace API.Services {
             return true;
         }
 
+        public async Task<IEnumerable<DeviceEvent>> GetAllDeviceEventsAsync(CancellationToken cancellationToken = default) {
+            return await _dbContext.DeviceEvents
+                .Include(de => de.PcDevice)
+                .OrderByDescending(de => de.Timestamp)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<DeviceEvent>> GetDeviceEventsByDeviceIdAsync(int deviceId, int limit = 50, int offset = 0, CancellationToken cancellationToken = default) {
+            return await _dbContext.DeviceEvents
+                .Include(de => de.PcDevice)
+                .Where(de => de.PcDeviceId == deviceId)
+                .OrderByDescending(de => de.Timestamp)
+                .Skip(offset)
+                .Take(limit)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<DeviceEvent?> GetDeviceEventByIdAsync(int id, CancellationToken cancellationToken = default) {
+            return await _dbContext.DeviceEvents
+                .Include(de => de.PcDevice)
+                .FirstOrDefaultAsync(de => de.Id == id, cancellationToken);
+        }
+
+        public async Task<DeviceEvent> CreateDeviceEventAsync(DeviceEvent deviceEvent, CancellationToken cancellationToken = default) {
+            if (deviceEvent == null)
+                throw new ArgumentNullException(nameof(deviceEvent));
+
+            var entry = await _dbContext.DeviceEvents.AddAsync(deviceEvent, cancellationToken);
+            await SaveChangesAsync(cancellationToken);
+            return entry.Entity;
+        }
+
+        public async Task<bool> DeleteDeviceEventAsync(int id, CancellationToken cancellationToken = default) {
+            var deviceEvent = await GetDeviceEventByIdAsync(id, cancellationToken);
+            if (deviceEvent == null) {
+                return false;
+            }
+
+            _dbContext.DeviceEvents.Remove(deviceEvent);
+            await SaveChangesAsync(cancellationToken);
+            return true;
+        }
+
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) {
             return await _dbContext.SaveChangesAsync(cancellationToken);
         }

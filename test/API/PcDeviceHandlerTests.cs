@@ -367,6 +367,9 @@ public class PcDeviceHandlerTests {
         _mockAppDbService.Setup(s => s.GetPcDeviceByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(device);
 
+        _mockAppDbService.Setup(s => s.CreateDeviceEventAsync(It.IsAny<DeviceEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((DeviceEvent e, CancellationToken ct) => e);
+
         // Act
         var result = await _handler.WakeDevice(1, TestContext.Current.CancellationToken);
 
@@ -374,6 +377,12 @@ public class PcDeviceHandlerTests {
         result.Should().NotBeNull();
         var okResult = result as Ok;
         okResult?.StatusCode.Should().Be(200);
+
+        // Verify that CreateDeviceEventAsync was called with correct event type
+        _mockAppDbService.Verify(s => s.CreateDeviceEventAsync(
+            It.Is<DeviceEvent>(e => e.PcDeviceId == 1 && e.EventType == "WakeCommandSent"),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]

@@ -49,6 +49,7 @@ namespace API {
                 builder.Services.AddScoped<WakeOnLanService>();
                 builder.Services.AddScoped<PcDeviceHandler>();
                 builder.Services.AddScoped<WakeScheduleHandler>();
+                builder.Services.AddScoped<DeviceEventHandler>();
                 builder.Services.AddSingleton<IDeviceMonitoringService, DeviceMonitoringService>();
                 builder.Services.AddHostedService(sp => (DeviceMonitoringService)sp.GetRequiredService<IDeviceMonitoringService>());
                 builder.Services.AddSingleton<IWakeScheduleService, WakeScheduleService>();

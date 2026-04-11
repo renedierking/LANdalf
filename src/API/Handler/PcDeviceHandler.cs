@@ -106,6 +106,16 @@ namespace API.Handler {
                 return CreateNotFoundResult($"PC device with ID {id} not found");
             }
             await _wolService.Wake(pc.MacAddress, pc.BroadcastAddress, cancellationToken);
+
+            // Log the wake command event
+            var deviceEvent = new Models.DeviceEvent {
+                PcDeviceId = pc.Id,
+                EventType = "WakeCommandSent",
+                Timestamp = DateTime.UtcNow,
+                Details = $"MAC: {pc.MacAddress}, Broadcast: {pc.BroadcastAddress?.ToString() ?? "default"}"
+            };
+            await _appDbService.CreateDeviceEventAsync(deviceEvent, cancellationToken);
+
             _logger.LogDebug("Wake-on-LAN packet sent to device {DeviceId} ({DeviceName}, MAC: {MacAddress})", id, pc.Name, pc.MacAddress);
             return Results.Ok(new { message = $"Wake-on-LAN packet sent to {pc.Name}" });
         }

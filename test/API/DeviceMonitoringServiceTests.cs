@@ -397,5 +397,81 @@ public class DeviceMonitoringServiceTests {
         _mockAppDbService.Verify(s => s.GetAllPcDevicesAsync(It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
+    [Fact]
+    public async Task CheckAllDevicesAsync_CreatesDeviceEvent_WhenDeviceComesOnline() {
+        // Arrange
+        var service = new DeviceMonitoringService(
+            NullLogger<DeviceMonitoringService>.Instance,
+            _mockScopeFactory.Object,
+            CreateOptions(),
+            _mockHubContext.Object);
+
+        var devices = new List<PcDevice> {
+            new() {
+                Id = 1,
+                Name = "Localhost",
+                MacAddress = PhysicalAddress.Parse("00-11-22-33-44-55"),
+                IpAddress = IPAddress.Loopback,
+                IsOnline = false
+            }
+        };
+
+        _mockAppDbService.Setup(s => s.GetAllPcDevicesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(devices);
+
+        _mockAppDbService.Setup(s => s.UpdatePcDeviceAsync(It.IsAny<PcDevice>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((PcDevice d, CancellationToken ct) => d);
+
+        _mockAppDbService.Setup(s => s.CreateDeviceEventAsync(It.IsAny<DeviceEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((DeviceEvent e, CancellationToken ct) => e);
+
+        // Act
+        await service.CheckAllDevicesAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        _mockAppDbService.Verify(s => s.CreateDeviceEventAsync(
+            It.Is<DeviceEvent>(e => e.PcDeviceId == 1 && e.EventType == "CameOnline"),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CheckAllDevicesAsync_CreatesDeviceEvent_WhenDeviceGoesOffline() {
+        // Arrange
+        var service = new DeviceMonitoringService(
+            NullLogger<DeviceMonitoringService>.Instance,
+            _mockScopeFactory.Object,
+            CreateOptions(),
+            _mockHubContext.Object);
+
+        var devices = new List<PcDevice> {
+            new() {
+                Id = 1,
+                Name = "Device1",
+                MacAddress = PhysicalAddress.Parse("00-11-22-33-44-55"),
+                IpAddress = null,
+                IsOnline = true
+            }
+        };
+
+        _mockAppDbService.Setup(s => s.GetAllPcDevicesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(devices);
+
+        _mockAppDbService.Setup(s => s.UpdatePcDeviceAsync(It.IsAny<PcDevice>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((PcDevice d, CancellationToken ct) => d);
+
+        _mockAppDbService.Setup(s => s.CreateDeviceEventAsync(It.IsAny<DeviceEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((DeviceEvent e, CancellationToken ct) => e);
+
+        // Act
+        await service.CheckAllDevicesAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        _mockAppDbService.Verify(s => s.CreateDeviceEventAsync(
+            It.Is<DeviceEvent>(e => e.PcDeviceId == 1 && e.EventType == "WentOffline"),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
     #endregion
 }
