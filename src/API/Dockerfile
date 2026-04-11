@@ -8,6 +8,7 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ENV DOTNET_EnableWriteXorExecute=0
 ARG BUILD_CONFIGURATION=Release
+ARG VERSION=0.0.0
 WORKDIR /src
 
 # First copy only the project file and run restore (cache-friendly)
@@ -18,11 +19,12 @@ RUN dotnet restore "API.csproj"
 COPY . .
 
 # Build
-RUN dotnet build "API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "API.csproj" -c $BUILD_CONFIGURATION -o /app/build /p:Version=$VERSION
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+ARG VERSION=0.0.0
+RUN dotnet publish "API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false /p:Version=$VERSION
 
 FROM base AS final
 WORKDIR /app
