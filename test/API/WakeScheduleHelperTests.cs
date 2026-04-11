@@ -92,6 +92,102 @@ public class WakeScheduleHelperTests {
 
     #endregion
 
+    #region ValidateDaysOfWeek Tests
+
+    [Fact]
+    public void ValidateDaysOfWeek_NullValue_ReturnsTrue() {
+        // Arrange
+        string? daysOfWeek = null;
+
+        // Act
+        var result = WakeScheduleHelper.ValidateDaysOfWeek(daysOfWeek);
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ValidateDaysOfWeek_EmptyString_ReturnsTrue() {
+        // Arrange
+        string? daysOfWeek = "";
+
+        // Act
+        var result = WakeScheduleHelper.ValidateDaysOfWeek(daysOfWeek);
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ValidateDaysOfWeek_WhitespaceString_ReturnsTrue() {
+        // Arrange
+        string? daysOfWeek = "   ";
+
+        // Act
+        var result = WakeScheduleHelper.ValidateDaysOfWeek(daysOfWeek);
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("6")]
+    [InlineData("1,2,3,4,5")]
+    [InlineData("0,6")]
+    [InlineData("0,1,2,3,4,5,6")]
+    public void ValidateDaysOfWeek_ValidFormats_ReturnsTrue(string daysOfWeek) {
+        // Act
+        var result = WakeScheduleHelper.ValidateDaysOfWeek(daysOfWeek);
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("7")]
+    [InlineData("-1")]
+    [InlineData("1,7")]
+    [InlineData("abc")]
+    [InlineData("1,2,abc")]
+    [InlineData("1.5")]
+    public void ValidateDaysOfWeek_InvalidFormats_ReturnsFalse(string daysOfWeek) {
+        // Act
+        var result = WakeScheduleHelper.ValidateDaysOfWeek(daysOfWeek);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void GenerateCronExpression_InvalidDaysOfWeek_ThrowsArgumentException() {
+        // Arrange
+        var scheduledTime = new TimeOnly(8, 0);
+        string daysOfWeek = "7,8,9"; // Invalid days
+
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentException>(() =>
+            WakeScheduleHelper.GenerateCronExpression(scheduledTime, daysOfWeek));
+
+        exception.ParamName.Should().Be("daysOfWeek");
+        exception.Message.Should().Contain("Invalid daysOfWeek format");
+    }
+
+    [Fact]
+    public void GenerateCronExpression_InvalidDaysOfWeekWithLetters_ThrowsArgumentException() {
+        // Arrange
+        var scheduledTime = new TimeOnly(8, 0);
+        string daysOfWeek = "1,2,abc"; // Invalid format
+
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentException>(() =>
+            WakeScheduleHelper.GenerateCronExpression(scheduledTime, daysOfWeek));
+
+        exception.ParamName.Should().Be("daysOfWeek");
+    }
+
+    #endregion
+
     #region UpdateScheduleExecution Tests
 
     [Fact]

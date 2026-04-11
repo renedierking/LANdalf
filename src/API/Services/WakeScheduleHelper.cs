@@ -20,10 +20,36 @@ namespace API.Services {
                 return $"{minute} {hour} * * *";
             }
 
-            // Parse comma-separated days (0=Sunday, 6=Saturday)
+            // Validate and parse comma-separated days (0=Sunday, 6=Saturday)
             // Cronos uses 0=Sunday format which matches our storage
             var days = daysOfWeek.Trim();
+            if (!ValidateDaysOfWeek(days)) {
+                throw new ArgumentException($"Invalid daysOfWeek format: '{days}'. Expected comma-separated values 0-6 (0=Sunday, 6=Saturday).", nameof(daysOfWeek));
+            }
+
             return $"{minute} {hour} * * {days}";
+        }
+
+        /// <summary>
+        /// Validates that daysOfWeek is in the correct format (comma-separated integers 0-6)
+        /// </summary>
+        public static bool ValidateDaysOfWeek(string? daysOfWeek) {
+            if (string.IsNullOrWhiteSpace(daysOfWeek)) {
+                return true; // null/empty is valid for one-time schedules
+            }
+
+            var parts = daysOfWeek.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (parts.Length == 0) {
+                return false;
+            }
+
+            foreach (var part in parts) {
+                if (!int.TryParse(part, out var day) || day < 0 || day > 6) {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>

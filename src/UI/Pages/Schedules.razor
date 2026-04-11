@@ -71,6 +71,8 @@
                 </TemplateColumn>
                 <TemplateColumn CellStyle="width: 150px">
                     <CellTemplate>
+                        <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit"
+                                       OnClick="@(() => ShowEditScheduleDialog(context.Item))" />
                         <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete"
                                        OnClick="@(() => DeleteScheduleAsync(context.Item))" />
                     </CellTemplate>
@@ -140,6 +142,45 @@
                     await LoadData();
                 } else {
                     Snackbar.Add($"Failed to create schedule: {addResult.Error!.Message}", Severity.Error);
+                }
+            }
+        }
+    }
+
+    private async Task ShowEditScheduleDialog(WakeScheduleDTO schedule) {
+        // Convert the existing schedule to edit DTO
+        var editSchedule = new WakeScheduleCreateDto {
+            PcDeviceId = schedule.PcDeviceId,
+            ScheduledTime = schedule.ScheduledTime,
+            DaysOfWeek = schedule.DaysOfWeek,
+            Enabled = schedule.Enabled
+        };
+
+        var parameters = new DialogParameters<WakeScheduleDialog> {
+            { x => x.Schedule, editSchedule },
+            { x => x.Devices, devices },
+            { x => x.IsEditMode, true }
+        };
+
+        var options = new DialogOptions {
+            BackdropClick = false,
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<WakeScheduleDialog>("Edit Wake Schedule", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled) {
+            var scheduleDto = await dialog.GetReturnValueAsync<WakeScheduleCreateDto>();
+            if (scheduleDto is not null) {
+                var updateResult = await ScheduleService.UpdateWakeScheduleAsync(schedule.Id, scheduleDto);
+                if (updateResult.IsSuccess) {
+                    Snackbar.Add("Schedule updated successfully", Severity.Success);
+                    await LoadData();
+                } else {
+                    Snackbar.Add($"Failed to update schedule: {updateResult.Error!.Message}", Severity.Error);
                 }
             }
         }
