@@ -62,14 +62,16 @@
                             }
                         </CellTemplate>
                     </TemplateColumn>
-                    <TemplateColumn CellStyle="width: 200px">
+                    <TemplateColumn CellStyle="width: 250px">
                         <CellTemplate>
                             <MudButton Color="Color.Primary" Variant="Variant.Filled"
                                        OnClick="@(async () => await WakePcDevice(context.Item))"
                                        aria-label="@($"Wake device {context.Item.Name}")">
                                 Start
                             </MudButton>
-                            <MudIconButton Class="ms-4" Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit"
+                            <MudIconButton Class="ms-4" Size="@Size.Small" Icon="@Icons.Material.Outlined.History"
+                                           OnClick="@(() => ShowDeviceHistoryDialog(context.Item))" />
+                            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit"
                                            OnClick="@(() => ShowDeviceEditDialog(context.Item))" />
                             <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete"
                                            OnClick="@(() => DeleteDeviceAsync(context.Item))" />
@@ -92,6 +94,7 @@
                             <MudItem xs="12" sm="6" md="4">
                                 <DeviceCard Device="device"
                                             OnStartClick="@(async () => await WakePcDevice(device))"
+                                            OnHistoryClick="@(() => ShowDeviceHistoryDialog(device))"
                                             OnEditClick="@(() => ShowDeviceEditDialog(device))"
                                             OnDeleteClick="@(async () => await DeleteDeviceAsync(device))" />
                             </MudItem>
@@ -154,6 +157,26 @@
 
     private async Task ToggleView() {
         await ViewPreferenceService.ToggleView(JsRuntime);
+    }
+
+    private async Task ShowDeviceHistoryDialog(PcDeviceDTO device) {
+        var parameters = new DialogParameters<DeviceHistoryDialog> {
+            { x => x.DeviceId, device.Id },
+            { x => x.DeviceName, device.Name }
+        };
+
+        var options = new DialogOptions {
+            BackdropClick = true,
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        };
+
+        await DialogService.ShowAsync<DeviceHistoryDialog>(
+            "Device History",
+            parameters,
+            options
+        );
     }
 
     private async Task ShowDeviceEditDialog(PcDeviceDTO? device = null) {

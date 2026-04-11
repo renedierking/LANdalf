@@ -9,11 +9,14 @@ namespace UI.Tests.Services;
 
 public class LANdalfApiServiceTests {
     private readonly Mock<LANdalfApiClient> _mockApiClient;
+    private readonly Mock<HttpClient> _mockHttpClient;
     private readonly LANdalfApiService _service;
 
     public LANdalfApiServiceTests() {
-        _mockApiClient = new Mock<LANdalfApiClient>(new System.Net.Http.HttpClient()) { CallBase = false };
-        _service = new LANdalfApiService(_mockApiClient.Object);
+        var httpClient = new HttpClient();
+        _mockApiClient = new Mock<LANdalfApiClient>(httpClient) { CallBase = false };
+        _mockHttpClient = new Mock<HttpClient>();
+        _service = new LANdalfApiService(_mockApiClient.Object, httpClient);
     }
 
     #region GetAllPcDevicesAsync Tests

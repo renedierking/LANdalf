@@ -21,8 +21,9 @@ public class HomeComponentTests_Simplified : BunitContext {
     private readonly DeviceStatusHubService _hubService;
 
     public HomeComponentTests_Simplified() {
-        _mockApiClient = new Mock<LANdalfApiClient>(new System.Net.Http.HttpClient());
-        _mockApiService = new LANdalfApiService(_mockApiClient.Object);
+        var httpClient = new System.Net.Http.HttpClient();
+        _mockApiClient = new Mock<LANdalfApiClient>(httpClient);
+        _mockApiService = new LANdalfApiService(_mockApiClient.Object, httpClient);
         _mockValidationService = new Mock<IDeviceValidationService>();
         _viewPreferenceService = new ViewPreferenceService();
 

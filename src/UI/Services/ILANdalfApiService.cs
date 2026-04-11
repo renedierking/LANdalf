@@ -8,5 +8,6 @@ namespace LANdalf.UI.Services {
         Task<Result<PcDeviceDTO, Exception>> GetPcDeviceByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<Result<bool, Exception>> UpdatePcDevice(PcDeviceDTO dto, CancellationToken cancellationToken = default);
         Task<Result<bool, Exception>> WakePcDeviceAsync(int id, CancellationToken cancellationToken = default);
+        Task<Result<IReadOnlyList<DeviceEventDTO>, Exception>> GetDeviceHistoryAsync(int deviceId, int limit = 50, int offset = 0, CancellationToken cancellationToken = default);
     }
 }
