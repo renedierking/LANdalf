@@ -14,13 +14,14 @@ The initial public release includes core WoL functionality with a modern web int
 
 ### v1.1.0 (In Progress)
 
-- [x] **Enhanced Status Monitoring**: Implement ping-based device status checks
-- [ ] **Device Groups**: Organize devices into categories (e.g., "Gaming", "Work", "Media Server")
-- [ ] **Scheduled Wake**: Schedule devices to wake at specific times or intervals
-- [ ] **Device History**: Track wake/sleep events with timestamps
+- [x] ** Status Monitoring**: Ping-based device status checks
+- [x] **Device Groups**: Organize devices into categories (e.g., "Gaming", "Work", "Media Server")
+- [x] **Scheduled Wake**: Schedule devices to wake at specific times or intervals
+- [x] **Device History**: Track wake/sleep events with timestamps
 
 ### v1.2.0 Polish & Accessibility
 
+- [ ] **Enhanced Status Monitoring**: Improve beyond basic ping
 - [ ] **Device Notes/Description**: Free-text notes field per device (firmware version, location, owner)
 - [ ] **Theme Customization**: Additional UI themes beyond current dark/light modes
 - [ ] **Bulk Operations**: Wake multiple devices with a single action
