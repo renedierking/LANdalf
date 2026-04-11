@@ -148,10 +148,18 @@
     }
 
     private async Task ShowEditScheduleDialog(WakeScheduleDTO schedule) {
+        // Convert UTC time to local time for display in the dialog
+        var localTime = schedule.ScheduledTime;
+        if (TimeOnly.TryParse(schedule.ScheduledTime, out var utcTime)) {
+            var utcDateTime = DateTime.UtcNow.Date.Add(utcTime.ToTimeSpan());
+            var localDateTime = utcDateTime.ToLocalTime();
+            localTime = TimeOnly.FromDateTime(localDateTime).ToString("HH:mm");
+        }
+
         // Convert the existing schedule to edit DTO
         var editSchedule = new WakeScheduleCreateDto {
             PcDeviceId = schedule.PcDeviceId,
-            ScheduledTime = schedule.ScheduledTime,
+            ScheduledTime = localTime,
             DaysOfWeek = schedule.DaysOfWeek,
             Enabled = schedule.Enabled
         };
