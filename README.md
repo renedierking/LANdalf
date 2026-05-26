@@ -38,11 +38,15 @@ LANdalf is a web-based Wake-on-LAN management platform built with .NET 10.0, Bla
 
 ## Interface Preview
 
-![LANdalf Home Interface](docs/images/home-interface.png)
+![LANdalf Home Interface](docs/images/devices-cards.png)
+
+![LANdalf Home Interface table](docs/images/devices-table.png)
+
+![LANdalf Schedules Interface](docs/images/schedules.png)
 
 ## 🚀 Quick Start
 
-Create a `docker-compose.yaml`:
+Create a `compose.yml`:
 
 <!-- BEGIN_DOCKER_COMPOSE -->
 ```yaml
@@ -56,9 +60,6 @@ services:
       - Cors__FrontendUrl=http://localhost # Adjust if NGINX_PORT != 80, e.g. http://localhost:8080
       # Docker Desktop (Windows/macOS): Uncomment and set your LAN broadcast for WoL to work.
       # - WOL_BROADCASTS=192.168.178.255
-      - Serilog__MinimumLevel__Default=Information
-      - Serilog__MinimumLevel__Override__Microsoft.AspNetCore=Warning
-      - Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=Warning
     volumes:
       - api-data:/app/LANdalf_Data
       - api-logs:/app/logs
@@ -85,9 +86,11 @@ docker compose up -d
 
 - **UI**: http://localhost
 - **API**: http://localhost:5000
-- **API Docs**: http://localhost:5000/scalar/v1
+- **OpenAPI Spec**: http://localhost:5000/scalar/v1
 
 > **Custom UI port:** Set `NGINX_PORT` (e.g. `8080`) and update `Cors__FrontendUrl` accordingly (e.g. `http://localhost:8080`).
+
+> **API Logging (Serilog):** Configure log levels and optional file logging in the **[Installation Guide](docs/INSTALLATION.md#serilog-logging-configuration)**.
 
 > **Docker Desktop (Windows/macOS):** WoL magic packets won't reach your LAN by default. Uncomment `WOL_BROADCASTS` in the compose file and set it to your LAN broadcast address (e.g. `192.168.178.255`). See the [WoL Setup Guide](docs/WOL_SETUP.md#docker-desktop-windowsmacos-packets-sent-to-wrong-network) for details.
 
@@ -100,50 +103,15 @@ docker compose up -d
 | 🚀 **[Installation & Setup](docs/INSTALLATION.md)** | Docker & manual installation, configuration, troubleshooting |
 | 🔧 **[Wake-on-LAN Setup](docs/WOL_SETUP.md)** | Device configuration, network setup, testing WoL |
 | 📡 **[API Usage Guide](docs/API_USAGE.md)** | API reference, examples, error handling |
+| 🛠️ **[Development Guide](docs/DEVELOPMENT.md)** | Build/test commands and development-specific patterns |
 | 🏗️ **[Architecture](ARCHITECTURE.md)** | System design, tech stack, data flow, database schema |
 | 🗺️ **[Roadmap](ROADMAP.md)** | Planned features and enhancements |
 
 ## 🛠️ Development
 
-```bash
-dotnet build LANdalf.slnx   # Build
-dotnet test                  # Test
-docker compose build         # Docker images
-```
+Build/test commands and development patterns are documented in the **[Development Guide](docs/DEVELOPMENT.md)**.
 
-### Minimal API extension pattern
-
-LANdalf uses a strategy pattern for Minimal API endpoint registration:
-
-- Implement `IMinimalApiStrategy` in the API project.
-- Register strategies through `AddMinimalApiStrategies()` (assembly scanning via `TryAddEnumerable` for idempotent registration).
-- Strategies are applied in `Program.cs` via `MapMinimalApiStrategies(...)`.
-
-This keeps `Program.cs` focused on composition and makes new endpoint groups plug-in friendly.
-
-### View preference persistence
-
-The `ViewPreferenceService` (in `src/UI/Services/`) stores the user's chosen view mode (card or table) in the browser's `localStorage` under the key `"view-preference"`. It is registered as a scoped service in `Program.cs` (UI) and injected into the `Home` page component.
-
-### Device monitoring configuration
-
-The `DeviceMonitoringService` (in `src/API/Services/`) runs as a background `IHostedService` that automatically pings devices to track their online/offline status. Configuration is managed through the IOptions pattern in `appsettings.json`:
-
-```json
-"DeviceMonitoring": {
-  "Enabled": true,
-  "IntervalSeconds": 30,
-  "TimeoutMilliseconds": 2000
-}
-```
-
-- **Enabled**: Toggle device monitoring on/off
-- **IntervalSeconds**: How often to ping devices (minimum 5 seconds)
-- **TimeoutMilliseconds**: Ping timeout threshold (minimum 100ms)
-
-Status changes are broadcast to connected clients via SignalR's `DeviceStatusHub`, enabling real-time UI updates without polling.
-
-See **[CONTRIBUTING.md](CONTRIBUTING.md)** for prerequisites, project structure, and development guidelines.
+See **[CONTRIBUTING.md](CONTRIBUTING.md)** for workflow and contribution guidelines.
 
 ## 🤝 Contributing
 

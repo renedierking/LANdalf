@@ -23,10 +23,14 @@ namespace API {
             try {
                 var builder = WebApplication.CreateBuilder(args);
 
-                builder.Host.UseSerilog((context, services, configuration) => configuration
-                    .ReadFrom.Configuration(context.Configuration)
-                    .ReadFrom.Services(services)
-                    .Enrich.FromLogContext());
+                builder.Host.UseSerilog((context, services, configuration) => {
+                    configuration
+                        .ReadFrom.Configuration(context.Configuration)
+                        .ReadFrom.Services(services)
+                        .Enrich.FromLogContext();
+
+                    SerilogFileLoggingConfigurator.TryConfigureFileSink(configuration, context.Configuration);
+                });
 
                 var dbPath = Path.Combine(builder.Environment.ContentRootPath, "LANdalf_Data", "landalf.db");
                 var dbDir = Path.GetDirectoryName(dbPath);

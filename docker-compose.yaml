@@ -11,9 +11,6 @@ services:
       # Example: 192.168.178.255 for a 192.168.178.0/24 network.
       # On Linux with network_mode: host you can usually leave this commented out.
       # - WOL_BROADCASTS=192.168.178.255
-      - Serilog__MinimumLevel__Default=Information
-      - Serilog__MinimumLevel__Override__Microsoft.AspNetCore=Warning
-      - Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=Warning
     volumes:
       - api-data:/app/LANdalf_Data
       - api-logs:/app/logs
