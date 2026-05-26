@@ -166,6 +166,34 @@ environment:
   - Cors__FrontendUrl=https://localhost:7052
 ```
 
+#### Serilog Logging Configuration
+
+Serilog settings can be configured in `src/API/appsettings.json` or via environment variables.
+
+**Common Docker environment variables:**
+
+```yaml
+environment:
+  - Serilog__MinimumLevel__Default=Information
+  - Serilog__MinimumLevel__Override__Microsoft.AspNetCore=Warning
+  - Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore=Warning
+  # Optional: enable file logging (disabled by default)
+  # - Serilog__File__Enabled=true
+```
+
+**Default behavior:**
+- File logging is disabled by default (`Serilog:File:Enabled=false`)
+- Console logging stays enabled
+
+**Optional file sink settings:**
+
+```yaml
+environment:
+  - Serilog__File__Path=logs/landalf-.log
+  - Serilog__File__RollingInterval=Day
+  - Serilog__File__RetainedFileCountLimit=14
+```
+
 #### Database
 - **Type**: SQLite
 - **Location**: `LANdalf_Data/landalf.db`

@@ -72,7 +72,7 @@ public class WakeOnLanServiceTests {
         cts.CancelAfter(TimeSpan.FromMilliseconds(10));
 
         // Act & Assert
-        await Assert.ThrowsAsync<TaskCanceledException>(
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
             async () => await _service.Wake(mac, broadcast, cts.Token)
         );
     }
