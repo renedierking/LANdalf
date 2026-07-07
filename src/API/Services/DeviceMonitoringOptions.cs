@@ -1,4 +1,4 @@
-namespace API.Services {
+﻿namespace API.Services {
     public class DeviceMonitoringOptions {
         public const string SectionName = "DeviceMonitoring";
 

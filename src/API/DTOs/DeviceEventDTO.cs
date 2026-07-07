@@ -1,4 +1,4 @@
-namespace LANdalf.API.DTOs {
+﻿namespace LANdalf.API.DTOs {
     public record DeviceEventDTO(
         int Id,
         int PcDeviceId,

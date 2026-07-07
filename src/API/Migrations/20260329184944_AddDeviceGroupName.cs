@@ -2,14 +2,11 @@
 
 #nullable disable
 
-namespace API.Migrations
-{
+namespace API.Migrations {
     /// <inheritdoc />
-    public partial class AddDeviceGroupName : Migration
-    {
+    public partial class AddDeviceGroupName : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        protected override void Up(MigrationBuilder migrationBuilder) {
             migrationBuilder.AddColumn<string>(
                 name: "GroupName",
                 table: "PcDevices",
@@ -18,8 +15,7 @@ namespace API.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+        protected override void Down(MigrationBuilder migrationBuilder) {
             migrationBuilder.DropColumn(
                 name: "GroupName",
                 table: "PcDevices");

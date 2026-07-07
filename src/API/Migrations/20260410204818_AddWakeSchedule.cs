@@ -1,20 +1,16 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+using System;
 
 #nullable disable
 
-namespace API.Migrations
-{
+namespace API.Migrations {
     /// <inheritdoc />
-    public partial class AddWakeSchedule : Migration
-    {
+    public partial class AddWakeSchedule : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        protected override void Up(MigrationBuilder migrationBuilder) {
             migrationBuilder.CreateTable(
                 name: "WakeSchedules",
-                columns: table => new
-                {
+                columns: table => new {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     PcDeviceId = table.Column<int>(type: "INTEGER", nullable: false),
@@ -25,8 +21,7 @@ namespace API.Migrations
                     NextExecution = table.Column<DateTime>(type: "TEXT", nullable: true),
                     CronExpression = table.Column<string>(type: "TEXT", nullable: false)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_WakeSchedules", x => x.Id);
                     table.ForeignKey(
                         name: "FK_WakeSchedules_PcDevices_PcDeviceId",
@@ -43,8 +38,7 @@ namespace API.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+        protected override void Down(MigrationBuilder migrationBuilder) {
             migrationBuilder.DropTable(
                 name: "WakeSchedules");
         }

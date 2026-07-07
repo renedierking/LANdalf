@@ -1,4 +1,4 @@
-namespace LANdalf.UI.Services {
+﻿namespace LANdalf.UI.Services {
     /// <summary>
     /// Service for validating PC device fields.
     /// </summary>

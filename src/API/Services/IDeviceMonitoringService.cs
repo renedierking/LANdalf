@@ -1,4 +1,4 @@
-namespace API.Services {
+﻿namespace API.Services {
     public interface IDeviceMonitoringService {
         /// <summary>
         /// Gets whether the monitoring service is currently enabled and running.

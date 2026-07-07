@@ -1,8 +1,8 @@
-﻿using Microsoft.Extensions.Options;
-using System.Net.NetworkInformation;
-using Microsoft.AspNetCore.SignalR;
-using API.Hubs;
+﻿using API.Hubs;
 using LANdalf.API.Extensions;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Options;
+using System.Net.NetworkInformation;
 
 namespace API.Services {
     public class DeviceMonitoringService : BackgroundService, IDeviceMonitoringService {
