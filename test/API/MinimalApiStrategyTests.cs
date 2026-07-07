@@ -1,4 +1,4 @@
-using API.MinimalApi;
+﻿using API.MinimalApi;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;

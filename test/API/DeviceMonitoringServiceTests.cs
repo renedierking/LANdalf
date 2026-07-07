@@ -1,4 +1,4 @@
-using API.Hubs;
+﻿using API.Hubs;
 using API.Models;
 using API.Services;
 using FluentAssertions;

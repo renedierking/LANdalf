@@ -1,4 +1,4 @@
-using API.Services;
+﻿using API.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Serilog;

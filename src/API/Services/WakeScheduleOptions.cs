@@ -1,4 +1,4 @@
-namespace API.Services {
+﻿namespace API.Services {
     public class WakeScheduleOptions {
         public const string SectionName = "WakeSchedule";
 

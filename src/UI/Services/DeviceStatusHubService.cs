@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR.Client;
-using LANdalf.UI.ApiClient;
+﻿using LANdalf.UI.ApiClient;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace LANdalf.UI.Services {
     public class DeviceStatusHubService : IAsyncDisposable {

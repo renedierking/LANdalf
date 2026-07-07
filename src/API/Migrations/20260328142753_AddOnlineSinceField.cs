@@ -1,16 +1,13 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+using System;
 
 #nullable disable
 
-namespace API.Migrations
-{
+namespace API.Migrations {
     /// <inheritdoc />
-    public partial class AddOnlineSinceField : Migration
-    {
+    public partial class AddOnlineSinceField : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        protected override void Up(MigrationBuilder migrationBuilder) {
             migrationBuilder.AddColumn<DateTime>(
                 name: "OnlineSince",
                 table: "PcDevices",
@@ -19,8 +16,7 @@ namespace API.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+        protected override void Down(MigrationBuilder migrationBuilder) {
             migrationBuilder.DropColumn(
                 name: "OnlineSince",
                 table: "PcDevices");

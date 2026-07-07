@@ -1,20 +1,16 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+using System;
 
 #nullable disable
 
-namespace API.Migrations
-{
+namespace API.Migrations {
     /// <inheritdoc />
-    public partial class AddDeviceEventTracking : Migration
-    {
+    public partial class AddDeviceEventTracking : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        protected override void Up(MigrationBuilder migrationBuilder) {
             migrationBuilder.CreateTable(
                 name: "DeviceEvents",
-                columns: table => new
-                {
+                columns: table => new {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     PcDeviceId = table.Column<int>(type: "INTEGER", nullable: false),
@@ -22,8 +18,7 @@ namespace API.Migrations
                     Timestamp = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Details = table.Column<string>(type: "TEXT", nullable: true)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_DeviceEvents", x => x.Id);
                     table.ForeignKey(
                         name: "FK_DeviceEvents_PcDevices_PcDeviceId",
@@ -40,8 +35,7 @@ namespace API.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+        protected override void Down(MigrationBuilder migrationBuilder) {
             migrationBuilder.DropTable(
                 name: "DeviceEvents");
         }
